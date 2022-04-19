@@ -5,10 +5,11 @@
 # ===============================#
 
 import json
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import matplotlib.image as mpimg
 import random
+
+import matplotlib.image as mpimg
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 
 
 def readJson(json_path):
