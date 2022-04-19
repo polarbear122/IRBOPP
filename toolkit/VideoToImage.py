@@ -1,3 +1,5 @@
+import os
+
 import cv2
 
 
@@ -24,10 +26,24 @@ def video_to_image(video_path, save_path):
     print("end")
 
 
+# 如果目录不存在则创建目录，存在则打印存在
+def make_dir_file(path):
+    url = path
+    if os.path.exists(url):
+        print("exist")
+        exit(0)
+    else:
+        os.mkdir(url)
+
+
 def main():
-    video_path = "E:/CodeResp/pycode/DataSet/JAAD_clips/video_0014.mp4"
-    save_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_0014/"
-    video_to_image(video_path, save_path)
+    video_id_start = 1
+    end = 347  # 共有1--346号视频
+    for i in range(video_id_start, end):
+        video_path = "E:/CodeResp/pycode/DataSet/JAAD_clips/video_" + str(i).zfill(4) + ".mp4"
+        save_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_" + str(i).zfill(4) + "/"
+        make_dir_file(save_path)
+        video_to_image(video_path, save_path)
 
 
 if __name__ == "__main__":
