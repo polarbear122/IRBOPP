@@ -62,7 +62,7 @@ def main():
         xml_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
         output_data_path = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
         XMLRead(xml_path, output_data_path, video_id)
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":

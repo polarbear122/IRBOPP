@@ -191,14 +191,34 @@ def write_pose_cross_data(j, bbox_path, image_path, output_data_path, tag, vis=F
         json.dump(train, outfile)
 
 
-def main():
-    json_path = "../../Dataset/Data_by_Matlab/cross_pose_json/alphapose-results.json"
-    bbox_path = '../../Dataset/Data_by_Matlab/cross/bbox'
-    image_path = '../../Dataset/Data_by_Matlab/cross/image'
-    output_data_path = '../../Dataset/Data_by_Matlab/cross_pose_data'
-
+def pose_compute(json_path):
     j = readJson(json_path)
-    write_pose_cross_data(j, bbox_path, image_path, output_data_path, 'cross', True)
+    for data in j:
+        img_id = data["image_id"]
+        box = data["box"]
+        keypoints = data["keypoints"]
+
+        p13_x = keypoints[39]
+        p13_y = keypoints[40]
+        p15_x = keypoints[45]
+        p15_y = keypoints[46]
+
+        p14_x = keypoints[42]
+        p14_y = keypoints[43]
+        p16_x = keypoints[48]
+        p16_y = keypoints[49]
+
+
+def main():
+    json_path = "E:\CodeResp\pycode\DataSet\pose_result/alphapose-results-0002.json"
+    pose_compute(json_path)
+
+    # bbox_path = '../../Dataset/Data_by_Matlab/cross/bbox'
+    # image_path = '../../Dataset/Data_by_Matlab/cross/image'
+    # output_data_path = '../../Dataset/Data_by_Matlab/cross_pose_data'
+    #
+    # j = readJson(json_path)
+    # write_pose_cross_data(j, bbox_path, image_path, output_data_path, 'cross', True)
 
 
 if __name__ == "__main__":
