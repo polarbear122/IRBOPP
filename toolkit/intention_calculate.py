@@ -10,10 +10,15 @@ import numpy as np
 def plot_line(x_axis_data, y_axis_data):
     # plot中参数的含义分别是横轴值，纵轴值，线的形状（'s'方块,'o'实心圆点，'*'五角星   ...，颜色，透明度,线的宽度和标签 ，
     plt.plot(x_axis_data, y_axis_data, 'b*--', alpha=0.5, linewidth=1, label='angle-time')  # 'bo-'表示蓝色实线，数据点实心原点标注
-
+    x = [0, 9]
+    y = [5, 5]
+    plt.plot(x, y, 'r*--', alpha=0.5, linewidth=1, label='angle=5°')
+    x = [0, 9]
+    y = [50, 50]
+    plt.plot(x, y, 'r*--', alpha=0.5, linewidth=1, label='angle=50°')
     plt.legend()  # 显示上面的label
-    plt.xlabel('time')  # x_label
-    plt.ylabel('angle')  # y_label
+    plt.xlabel('time/s')  # x_label
+    plt.ylabel('angle/°')  # y_label
     plt.show()
 
 
