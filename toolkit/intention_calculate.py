@@ -1,10 +1,11 @@
 # 课程：人机协作与交互作业
-import json
 import time
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+
+from read_pose_data import read_json
 
 
 def plot_line(x_axis_data, y_axis_data):
@@ -22,15 +23,8 @@ def plot_line(x_axis_data, y_axis_data):
     plt.show()
 
 
-def readJson(json_path):
-    json_data = open(json_path)
-    json_string = json_data.read()
-    j = json.loads(json_string)
-    return j
-
-
 def pose_compute(json_path):
-    pose_result = readJson(json_path)
+    pose_result = read_json(json_path)
     x_axis_data, y_axis_data = [], []
     pre_one, nearest_id_one, pre_two, nearest_id_two = False, 0, False, 0
     img_id_list = []
@@ -96,7 +90,7 @@ def get_cross_angle(x1, y1, x2, y2, x3, y3, x4, y4):
 
 
 def main():
-    json_path = "E:\CodeResp\pycode\DataSet\pose_result/alphapose-results-0014-track.json"
+    json_path = "E:/CodeResp/pycode/DataSet/pose_result/alphapose-results-0014-track.json"
     pose_compute(json_path)
     cv2.destroyAllWindows()
 

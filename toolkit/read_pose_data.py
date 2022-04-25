@@ -1,20 +1,14 @@
-# ===============================#
-# ReadPoseData.py               #
-# Author: Xiaofeng Tang         #
-# Mail: xiaofeng419@gmail.com   #
-# ===============================#
+# 读取alpha pose的检测结果 json
 
 import json
 import random
-import time
 
 import matplotlib.image as mpimg
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 
 
-def readJson(json_path):
-    # Read Json File by AlphaPose
+def read_json(json_path):
     json_data = open(json_path)
     json_string = json_data.read()
     j = json.loads(json_string)
@@ -22,7 +16,7 @@ def readJson(json_path):
 
 
 # From https://www.pyimagesearch.com/2016/11/07/intersection-over-union-iou-for-object-detection/
-def bb_intersection_over_union(boxA, boxB):
+def box_IoU(boxA, boxB):
     # determine the (x, y)-coordinates of the intersection rectangle
     xA = max(boxA[0], boxB[0])
     yA = max(boxA[1], boxB[1])
@@ -30,7 +24,7 @@ def bb_intersection_over_union(boxA, boxB):
     yB = min(boxA[3], boxB[3])
 
     # compute the area of intersection rectangle
-    interArea = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+    inter_area = max(0, xB - xA + 1) * max(0, yB - yA + 1)
 
     # compute the area of both the prediction and ground-truth
     # rectangles
@@ -40,15 +34,13 @@ def bb_intersection_over_union(boxA, boxB):
     # compute the intersection over union by taking the intersection
     # area and dividing it by the sum of prediction + ground-truth
     # areas - the interesection area
-    iou = interArea / float(boxAArea + boxBArea - interArea)
+    iou = inter_area / float(boxAArea + boxBArea - inter_area)
 
     # return the intersection over union value
     return iou
 
 
-def readBoundingBox(txtFilePath):
-    # Read BBox by Matlab
-
+def read_bounding_box(txtFilePath):
     file1 = open(txtFilePath, "r")
     bbox = file1.readlines()[0].split(',')[1:5]
     file1.close()
@@ -60,64 +52,34 @@ def readBoundingBox(txtFilePath):
     return bbox
 
 
-def readPoseBox(j_image):
-    '''
-        Result (17 body parts)
-            {0,  "Nose"},
-            {1,  "LEye"},
-            {2,  "REye"},
-                    {3,  "LEar"},
-                    {4,  "REar"},
-                    {5,  "LShoulder"},
-                    {6,  "RShoulder"},
-                    {7,  "LElbow"},
-                    {8,  "RElbow"},
-                    {9,  "LWrist"},
-                    {10, "RWrist"},
-                    {11, "LHip"},
-                    {12, "RHip"},
-                    {13, "LKnee"},
-                    {14, "Rknee"},
-                    {15, "LAnkle"},
-                    {16, "RAnkle"},
-    '''
+def read_pose_box(j_image):
     # x, y are the vectors of body parts locations, confi is the vector of the confidence
-    x = []
-    y = []
-    confi = []
-
-    # Extract 17 points for each pedestrian
-
+    x, y, confi = [], [], []  # x位置 # y位置 # 特征点的可见性
+    # 提取出头部的几个特征点  0 1 2 3 4 17 18
     right_x = 0
     left_x = 99999
     top_y = 0
     bottom_y = 99999
-    for i in range(17):
-
+    for i in range(26):
         x.append(j_image["keypoints"][i * 3 + 0])
         y.append(j_image["keypoints"][i * 3 + 1])
         confi.append(j_image["keypoints"][i * 3 + 2])
 
-        if confi[-1] > 0.45:
-            # get pose box
-            if x[-1] > right_x:
-                right_x = x[-1]
-            if x[-1] < left_x:
-                left_x = x[-1]
-            if y[-1] > top_y:
-                top_y = y[-1]
-            if y[-1] < bottom_y:
-                bottom_y = y[-1]
+        # 获取特征点位置，避免越界
+        if x[-1] > right_x:
+            right_x = x[-1]
+        if x[-1] < left_x:
+            left_x = x[-1]
+        if y[-1] > top_y:
+            top_y = y[-1]
+        if y[-1] < bottom_y:
+            bottom_y = y[-1]
+        # Visualize Json result
+        # plt.scatter(x, y, s=2, c='red', marker='o')
 
-            # Visualize Json result
-            # plt.scatter(x, y, s=2, c='red', marker='o')
-
-    # Get Pose Box
+    # 获取 bounding box
     pbox = [0, 0, 0, 0]
-    pbox[0] = left_x
-    pbox[1] = bottom_y
-    pbox[2] = right_x
-    pbox[3] = top_y
+    pbox[0], pbox[1], pbox[2], pbox[3] = left_x, bottom_y, right_x, top_y
     return x, y, confi, pbox
 
 
@@ -137,10 +99,10 @@ def write_pose_cross_data(j, bbox_path, image_path, output_data_path, tag, vis=F
             txtFileName = vid + '_' + vnum + '_' + pid + '_' + pnum + '.txt'
             txtFilePath = bbox_path + '/' + txtFileName
 
-            bbox = readBoundingBox(txtFilePath)
-            x, y, confi, pbox = readPoseBox(j_image)
+            bbox = read_bounding_box(txtFilePath)
+            x, y, confi, pbox = read_pose_box(j_image)
 
-            if (vis):
+            if vis:
                 # Show original image at 19020 * 1080
                 img = mpimg.imread(image_path + '/' + image_ID)
                 fig = plt.figure(figsize=(19.2, 10.8), dpi=100)
@@ -155,17 +117,17 @@ def write_pose_cross_data(j, bbox_path, image_path, output_data_path, tag, vis=F
                 plt.show()
                 plt.close()
 
-            iou = bb_intersection_over_union(pbox, bbox)
+            iou = box_IoU(pbox, bbox)
 
             # If iou is not 0
-            if (iou > 0.0000000001):
+            if iou > 0.0000000001:
                 # write txt file
                 strout = ''
-                for i in range(17):
+                for i in range(26):
                     strout += str(x[i]) + ',' + str(y[i]) + ',' + str(confi[i]) + ','
                 strout += str(iou) + ',' + tag
                 str0 = result.get(image_ID)
-                if str0 != None:
+                if str0 is not None:
                     oldiou = float(str0.split(',')[-2])
                     if oldiou < iou:
                         result[image_ID] = strout
@@ -193,16 +155,13 @@ def write_pose_cross_data(j, bbox_path, image_path, output_data_path, tag, vis=F
 
 
 def main():
-    # json_path = "../../Dataset/Data_by_Matlab/cross_pose_json/alphapose-results.json"
+    json_path = "E:/CodeResp/pycode/DataSet/pose_result/alphapose-results-0002.json"
     # bbox_path = '../../Dataset/Data_by_Matlab/cross/bbox'
     # image_path = '../../Dataset/Data_by_Matlab/cross/image'
     # output_data_path = '../../Dataset/Data_by_Matlab/cross_pose_data'
-    video_id = "video_0031"
-    json_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".json"
-    j = readJson(json_path)
+    #
+    # j = readJson(json_path)
     # write_pose_cross_data(j, bbox_path, image_path, output_data_path, 'cross', True)
-    print(j)
-    time.sleep(1000)
 
 
 if __name__ == "__main__":
