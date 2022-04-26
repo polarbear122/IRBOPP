@@ -1,22 +1,20 @@
 # 训练图像级别的svm分类器
-import pickle
-
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2
-from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
-from sklearn.svm import SVC
-
+import sklearn
 from toolkit.xml_read import xml_read, str_to_int
 from toolkit.read_pose_data import read_json
-
 import numpy as np
-import operator
-from random import shuffle
+from sklearn import svm
+import pickle
 
-from train import svm
+
+def get_face_keypoints_confi(keypoints):
+    # key points 0 1 2 3 4 17 18
+    if len(keypoints) != 78:
+        return []
+    face_confi = []
+    for i in [0, 1, 2, 3, 4, 17, 18]:
+        face_confi.append(keypoints[i * 3 + 2])
+    return face_confi
 
 
 def get_svm_train(jaad_anno_path, alpha_pose_path):
@@ -54,7 +52,7 @@ def get_svm_train(jaad_anno_path, alpha_pose_path):
                     diff = (pose["box"][0] - x_mid) ** 2 + (pose["box"][1] - y_mid) ** 2
                     if diff < mid_difference:
                         mid_difference = diff
-                        x_keypoints_proposal = pose["keypoints"]
+                        x_keypoints_proposal = get_face_keypoints_confi(pose["keypoints"])
             if x_keypoints_proposal:
                 x.append(x_keypoints_proposal)
                 is_look = annotation["attribute"][2]["#text"]
@@ -67,33 +65,43 @@ def get_svm_train(jaad_anno_path, alpha_pose_path):
     return np.mat(x), np.mat(y).T
 
 
+def svm_trainer(train_data, label):
+    train_data, test_data, train_label, test_label = \
+        sklearn.model_selection.train_test_split(train_data, label, random_state=1, train_size=0.6, test_size=0.4)
+    classifier = svm.SVC(C=1, kernel='rbf', gamma=1, decision_function_shape='ovr')  # 设置训练器
+    classifier.fit(train_data, train_label.ravel())  # 对训练集部分进行训练
+    train_data_score = classifier.score(train_data, train_label)
+    test_data_score = classifier.score(test_data, test_label)
+    print("训练集正确率:%0.3f%%" % train_data_score)
+    print("测试集正确率:%0.3f%%" % test_data_score)
+    s = pickle.dumps(classifier)
+    with open(file="trained_model/svm.model", mode="wb+") as f:
+        f.write(s)
+
+
+def load_svm_model(file_path):
+    with open(file=file_path, mode="wb+") as trained_model:
+        s2 = trained_model.read()
+        model = pickle.loads(s2)
+    # expected = test_y
+    # predicted = model1.predict(test_X)
+    return model
+
+
 if __name__ == "__main__":
-    dataSet, labels = np.zeros((1, 78), float), np.zeros((1, 1), float)
-    for i in range(1, 20):
+    train_data_shape = 7  # 训练的数据的列的大小为7，总训练的数据格式为(number_of_data,7)
+    train_dataset, labels = np.zeros((1, train_data_shape), float), np.zeros((1, 1), float)
+    for i in range(1, 83):
         video_id = "video_" + str(i).zfill(4)
         xml_anno_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
         output_data_path = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
         alpha_pose_path = "E:/CodeResp/pycode/DataSet/pose_result/" + video_id + "/alphapose-results.json"
-        # 1、导入训练数据
-        print(i, "------------ 加载数据 --------------")
         x, y = get_svm_train(xml_anno_path, alpha_pose_path)
-        if x.shape[1] == 78:
-            dataSet = np.concatenate((dataSet, x))
+        if x.shape[1] == train_data_shape:
+            train_dataset = np.concatenate((train_dataset, x))
             labels = np.concatenate((labels, y))
-
-    np.savetxt("data.csv", dataSet, delimiter=',')
-    np.savetxt("label.csv", labels, delimiter=',')
-    # np.savetxt('frame', dataSet, fmt='%f', delimiter=None)
-    # 2、训练SVM模型
-    print("------------ 训练模型 ---------------")
-    C = 1
-    toler = 0.001
-    maxIter = 5
-    svm_model = svm.SVM_training(dataSet, labels, C, toler, maxIter)
-    # 3、计算训练的准确性
-    print("------------ 计算训练的正确率 --------------")
-    accuracy = svm.cal_accuracy(svm_model, dataSet, labels)
-    print("训练的正确率是: %.3f%%" % (accuracy * 100))
-    # 4、保存最终的SVM模型
-    print("------------ 保存模型 ----------------")
-    svm.save_svm_model(svm_model, "model_file")
+    train_dataset = np.asarray(train_dataset)
+    labels = np.asarray(labels)
+    np.savetxt("trained_model/data.csv", train_dataset, delimiter=',')
+    np.savetxt("trained_model/label.csv", labels, delimiter=',')
+    svm_trainer(train_dataset, labels)

@@ -199,6 +199,7 @@ def SVM_training(train_x, train_y, C, toler, max_iter, kernel_option=('rbf', 0.4
     '''
     # 1、初始化SVM分类器
     svm = SVM(train_x, train_y, C, toler, kernel_option)
+    print("初始化SVM完成,开始训练")
 
     # 2、开始训练
     entireSet = True
@@ -272,3 +273,21 @@ def save_svm_model(svm_model, model_file):
     '''
     with open(model_file, 'wb') as f:
         pickle.dump(svm_model, f)
+
+
+if __name__ == "__main__":
+    # 1、导入训练数据
+    print("------------ 加载数据 --------------")
+    dataSet, labels = [], []
+    # 2、训练SVM模型
+    print("------------ 训练模型 ---------------")
+    svm_model = SVM_training(dataSet, labels, C=1, toler=0.001, max_iter=5)
+
+    # 3、计算训练的准确性
+    print("------------ 计算训练的正确率 --------------")
+    accuracy = cal_accuracy(svm_model, dataSet, labels)
+    print("训练的正确率是: %.3f%%" % (accuracy * 100))
+
+    # 4、保存最终的SVM模型
+    print("------------ 保存模型 ----------------")
+    save_svm_model(svm_model, "model_file")
