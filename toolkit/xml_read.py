@@ -42,12 +42,12 @@ def jaad_read(xml_file_path, output_file, video_id):
             ytl = str_to_int(annotation["@ytl"])
             x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
 
-            img = cv2.imread(output_file + annotation["@frame"] + ".jpg")
-            cv2.line(img, (xbr, ytl), (xtl, ytl), (0, 0, 255), thickness=2)
-            cv2.line(img, (xbr, ytl), (xbr, ybr), (0, 0, 255), thickness=2)
-            cv2.line(img, (xbr, ybr), (xtl, ybr), (0, 0, 255), thickness=2)
-            cv2.line(img, (xtl, ybr), (xtl, ytl), (0, 0, 255), thickness=2)
-            cv2.putText(img, is_look, (x_mid, y_mid), cv2.FONT_HERSHEY_SIMPLEX, 1, (55, 255, 155), 2)
+            # img = cv2.imread(output_file + annotation["@frame"] + ".jpg")
+            # cv2.line(img, (xbr, ytl), (xtl, ytl), (0, 0, 255), thickness=2)
+            # cv2.line(img, (xbr, ytl), (xbr, ybr), (0, 0, 255), thickness=2)
+            # cv2.line(img, (xbr, ybr), (xtl, ybr), (0, 0, 255), thickness=2)
+            # cv2.line(img, (xtl, ybr), (xtl, ytl), (0, 0, 255), thickness=2)
+            # cv2.putText(img, is_look, (x_mid, y_mid), cv2.FONT_HERSHEY_SIMPLEX, 1, (55, 255, 155), 2)
             # cv2.imwrite("./save.jpg", img)
 
             # img = cv2.resize(img, (1920 // 2, 1080 // 2))
