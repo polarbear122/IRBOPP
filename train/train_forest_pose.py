@@ -1,14 +1,15 @@
 import pickle
+import time
 
-import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split
 
-from train.get_data import get_train_data
+from train import get_data
+from log_config import log
 
 
 def train_forest_pose(train_dataset, labels):
-    x_train, x_test, y_train, y_test = train_test_split(train_dataset, labels, test_size=0.2, random_state=101)
+    x_train, x_test, y_train, y_test = train_test_split(train_dataset, labels, test_size=0.4, random_state=1)
     # 评估回归性能
     # criterion ：
     # 回归树衡量分枝质量的指标，支持的标准有三种：
@@ -25,8 +26,7 @@ def train_forest_pose(train_dataset, labels):
     forest.fit(x_train, y_train)
     train_data_score = forest.score(x_train, y_train) * 100
     test_data_score = forest.score(x_test, y_test) * 100
-    print("训练集正确率:%0.3f%%\n" % train_data_score)
-    print("测试集正确率:%0.3f%%\n" % test_data_score)
+    log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
     # y_train_pred = forest.predict(x_train)
     # y_test_pred = forest.predict(x_test)
     # print('MSE train: %.3f, test: %.3f' % (
@@ -41,20 +41,13 @@ def train_forest_pose(train_dataset, labels):
 
 
 if __name__ == "__main__":
-    train_data_shape = 7  # 训练的数据的列的大小为7，总训练的数据格式为(number_of_data,7)
-    train_dataset, labels = np.zeros((1, train_data_shape), float), np.zeros((1, 1), float)
-    for i in range(1, 347):
-        video_id = "video_" + str(i).zfill(4)
-        xml_anno_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
-        output_data_path = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
-        alpha_pose_path = "E:/CodeResp/pycode/DataSet/pose_result/" + video_id + "/alphapose-results.json"
-        x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id)
-        if x.shape[1] == train_data_shape:
-            train_dataset = np.concatenate((train_dataset, x))
-            labels = np.concatenate((labels, y))
-
-    np.savetxt("trained_model/forest_data.csv", train_dataset, delimiter=',')
-    np.savetxt("trained_model/forest_label.csv", labels, delimiter=',')
-    train_dataset = np.asarray(train_dataset)
-    labels = np.asarray(labels)
-    train_forest_pose(train_dataset, labels.ravel())
+    start_at = time.time()
+    train_dataset, labels = get_data.read_csv_train_label_data()
+    get_data_at = time.time()
+    log.logger.info(
+        "forest data to be trained:(%d,%d),%d" % (train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
+    train_forest_pose(train_dataset, labels)
+    end_at = time.time()
+    total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
+    # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序
+    log.logger.info("forest:总运行时间%f秒,数据读取%f秒,训练%f秒" % (total_con, read_con, train_con))
