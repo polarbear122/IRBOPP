@@ -9,30 +9,66 @@ from toolkit.read_pose_data import read_json
 from toolkit.xml_read import xml_read, str_to_int
 
 
-def read_csv_train_label_data():
-    pose_array = np.loadtxt("trained_model/all_train_data.csv", dtype=np.float_, delimiter=',')
-    label_array = np.loadtxt("trained_model/all_label.csv", dtype=np.float_, delimiter=',')
+# test=0:测试用小文件，1:iou all数据，2:中心点检测得到的数据
+def read_csv_train_label_data(test: int):
+    # 从csv文件中读取
+    if test == 0:
+        pose_array = np.loadtxt("trained_model/test_small_train_data.csv", dtype=np.float_, delimiter=',')
+        label_array = np.loadtxt("trained_model/test_small_label.csv", dtype=np.float_, delimiter=',')
+    elif test == 1:
+        pose_array = np.loadtxt("trained_model/iou_all_train_data.csv", dtype=np.float_, delimiter=',')
+        label_array = np.loadtxt("trained_model/iou_all_label.csv", dtype=np.float_, delimiter=',')
+    elif test == 2:
+        pose_array = np.loadtxt("trained_model/center_point_all_train_data.csv", dtype=np.float_, delimiter=',')
+        label_array = np.loadtxt("trained_model/center_point_all_label.csv", dtype=np.float_, delimiter=',')
+    else:
+        print("读取数据的参数错误，test=0:测试用小文件，1:iou 匹配数据，2:中心点匹配数据")
+        return
     log.logger.info("csv data has been load")
-    num_start, num_stop = 0, 84142  # 总共有84141条数据,[start,stop),前开后闭区间
-    output_range = [0, 1, 2, 3, 4, 17, 18]
-    return pose_array[num_start:num_stop, output_range], label_array[num_start:num_stop]  # 使用逗号进行裁剪维度分割
+    num_start, num_stop = 0, 99623  # 总共有84141条数据,[start,stop),前开后闭区间
+    # return pose_array[num_start:num_stop, output_range], label_array[num_start:num_stop]  # 使用逗号进行裁剪维度分割
+    return normalize_face_point(pose_array)[num_start:num_stop], label_array[num_start:num_stop]
 
 
-def get_key_points(keypoints):
+def normalize_face_point(pose_array: np.array):
+    """
+    正则化脸部特征点
+    使用0位置（鼻子）作为零点，所有特征点减去该点坐标，分别除以人的box宽和17，18特征点（额头、下巴）之间高度
+    [0, 1, 2, 3, 4, 17, 18] 脸部的特征点范围，共7个特征点
+    """
+    face_range = [0, 1, 2, 3, 4, 17, 18]
+    normalize_array = np.zeros((len(pose_array), 1))
+    # for point_conf_position in face_range:
+    #     output_range.append(point_conf_position * 3 + 2)
+    box_width = np.max(pose_array, axis=1)  # 行人的宽度，shape=(number,1)
+    face_height = pose_array[:, 18 * 3 + 1] - pose_array[:, 17 * 3 + 1]  # 脸部的高度
+    face_center_x, face_center_y = pose_array[:, 1], pose_array[:, 2]  # 脸部中心点（鼻子）的坐标，列向量
+    for position in face_range:
+        sub_x, sub_y = pose_array[:, position] - face_center_x, pose_array[:, position + 1] - face_center_y
+        norm_x = np.divide(sub_x, box_width, out=np.zeros_like(sub_x), where=box_width != 0).reshape(-1, 1)
+        norm_y = np.divide(sub_y, face_height, out=np.zeros_like(sub_y), where=face_height != 0).reshape(-1, 1)
+        normalize_array = np.concatenate((normalize_array, norm_x), axis=1)  # 宽度方向
+        normalize_array = np.concatenate((normalize_array, norm_y), axis=1)  # 高度方向
+        normalize_array = np.concatenate((normalize_array, pose_array[:, position + 2].reshape(-1, 1)), axis=1)  # 可见性
+    return normalize_array[:, 1:]
+
+
+def get_key_points(keypoints: list):
     # key points [0, 1, 2, 3, 4, 17, 18]
     if len(keypoints) != 78:
         return []
     key_points = []
-    for i in [0, 1, 2, 3, 4, 17, 18]:
-        key_points.append(keypoints[i * 3 + 2])
-    # for i in range(26):
-    #     key_points.append(keypoints[i * 3 + 0])
-    #     key_points.append(keypoints[i * 3 + 1])
+    # for i in [0, 1, 2, 3, 4, 17, 18]:
     #     key_points.append(keypoints[i * 3 + 2])
+    for i in range(26):
+        key_points.append(keypoints[i * 3 + 0])
+        key_points.append(keypoints[i * 3 + 1])
+        key_points.append(keypoints[i * 3 + 2])
     return key_points
 
 
-def plot_pose_box_look(pose_box, annotation, is_look, video_id):
+# 画出（左上角，宽，高）格式的box
+def plot_pose_box_look_b(pose_box, annotation, is_look, video_id):
     output_file = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
     img = cv2.imread(output_file + annotation["@frame"] + ".jpg")
     a, b, c, d = int(pose_box[0]), int(pose_box[1]), int(pose_box[2]), int(pose_box[3])
@@ -44,6 +80,36 @@ def plot_pose_box_look(pose_box, annotation, is_look, video_id):
     img = cv2.resize(img, (1920 // 2, 1080 // 2))
     cv2.imshow("./pose box looking", img)
     cv2.waitKey(1)
+
+
+# 画出（左上角，右下角）格式的box
+def plot_pose_box_look(pose_box, annotation, is_look, video_id):
+    output_file = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
+    img = cv2.imread(output_file + annotation["@frame"] + ".jpg")
+    xtl, ytl, xbr, ybr = int(pose_box[0]), int(pose_box[1]), int(pose_box[2]), int(pose_box[3])
+    cv2.line(img, (xbr, ytl), (xtl, ytl), (0, 0, 255), thickness=2)
+    cv2.line(img, (xbr, ytl), (xbr, ybr), (0, 0, 255), thickness=2)
+    cv2.line(img, (xbr, ybr), (xtl, ybr), (0, 0, 255), thickness=2)
+    cv2.line(img, (xtl, ybr), (xtl, ytl), (0, 0, 255), thickness=2)
+    x_mid, y_mid = (xbr + xtl) // 2, (ybr + ytl) // 2
+    # cv2.putText(img, is_look, (x_mid, y_mid), cv2.FONT_HERSHEY_SIMPLEX, 1, (55, 255, 155), 2)
+    cv2.putText(img, str(pose_box[0]), (x_mid, y_mid + 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (55, 255, 155), 2)
+    img = cv2.resize(img, (1920 // 2, 1080 // 2))
+    cv2.imshow("./pose box looking", img)
+    cv2.waitKey(1)
+
+
+def box_iou(box1, box2):
+    # 计算box a和box b的IOU值,输入左上角坐标，右下角坐标, box:[x1, y1, x2, y2]
+    # 例如box1 = [0,0,10,10], box2 = [5,5,15,15]
+    in_h = min(box1[3], box2[3]) - max(box1[1], box2[1])
+    in_w = min(box1[2], box2[2]) - max(box1[0], box2[0])
+    inner = 0 if in_h < 0 or in_w < 0 else in_h * in_w
+    union = (box1[2] - box1[0]) * (box1[3] - box1[1]) + (box2[2] - box2[0]) * (box2[3] - box2[1]) - inner
+    if union == 0.0:
+        return 0.0
+    iou = inner / union
+    return iou
 
 
 def get_train_data(jaad_anno_path, alpha_pose_path, video_id):
@@ -67,26 +133,27 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id):
         if is_repeat >= 2:
             print(jaad_anno_path, "there are two box in one video")
         for annotation in i["box"]:
+            # jaad注释文件，左上角，右下角 (top-left, bottom-right), ybr>xbr,ytl>xtl
+            xtl, ytl = str_to_int(annotation["@xtl"]), str_to_int(annotation["@ytl"])
+            xbr, ybr = str_to_int(annotation["@xbr"]), str_to_int(annotation["@ybr"])
+            # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
 
-            xbr = str_to_int(annotation["@xbr"])  # 左上角，右下角 (top-left, bottom-right)
-            xtl = str_to_int(annotation["@xtl"])
-            ybr = str_to_int(annotation["@ybr"])  # ybr>xbr,ytl>xtl
-            ytl = str_to_int(annotation["@ytl"])
-            x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
-
-            mid_difference = 100  # 中心点误差
-            pose_box = []  # alpha pose的box位置，用于检测,([0],[1])为左上角，（[2],[3])为宽和高
+            max_iou = 0.6
+            pose_box = []  # alpha pose的box位置,json文件中为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal = []  # 存储key points
             for pose in alpha_pose:
                 if pose["score"] < 1:
                     continue
                 if pose["image_id"] == annotation["@frame"] + ".jpg":
-                    diff = (pose["box"][0] + pose["box"][2] / 2 - x_mid) ** 2 + (
-                            pose["box"][1] + pose["box"][3] / 2 - y_mid) ** 2
-                    if diff < mid_difference:
-                        mid_difference = diff
+                    pose_box = [pose["box"][0], pose["box"][1], pose["box"][0] + pose["box"][2],
+                                pose["box"][1] + pose["box"][3]]
+                    true_box = [xtl, ytl, xbr, ybr]
+                    iou_val = box_iou(pose_box, true_box)
+                    if iou_val > max_iou:
                         x_keypoints_proposal = get_key_points(pose["keypoints"])
-                        pose_box = pose["box"]
+                        max_iou = iou_val
+                elif pose["image_id"] == str(int(annotation["@frame"]) + 1) + ".jpg":
+                    break
             is_look = annotation["attribute"][2]["#text"]
             if x_keypoints_proposal:
                 x.append(x_keypoints_proposal)
@@ -94,17 +161,16 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id):
                     y.append(1)
                 else:
                     y.append(0)
-            need_plot = False
-            if pose_box:
-                if need_plot:
-                    plot_pose_box_look(pose_box, annotation, is_look)
+                need_plot = False
+                if need_plot and pose_box and max_iou > 0.6:
+                    plot_pose_box_look(pose_box, annotation, is_look, video_id)
 
     print(video_id, "shape:", np.mat(x).shape, np.mat(y).T.shape)
     return np.mat(x), np.mat(y).T
 
 
 def get_init_data():
-    train_data_shape = 7  # 训练的数据的列的大小为7，总训练的数据格式为(number_of_data,7)
+    train_data_shape = 78  # 训练的数据的列的大小为7，总训练的数据格式为(number_of_data,train_data_shape)
     train_dataset, labels = np.zeros((1, train_data_shape), float), np.zeros((1, 1), float)
     for i in range(1, 347):
         video_id = "video_" + str(i).zfill(4)
@@ -118,8 +184,8 @@ def get_init_data():
     print("all data saved, shape:", train_dataset.shape, labels.shape, "true shape:", train_data_shape)
     train_dataset = np.asarray(train_dataset)
     labels = np.asarray(labels)
-    # np.savetxt("trained_model/all_train_data.csv", train_dataset, delimiter=',')
-    # np.savetxt("trained_model/all_label.csv", labels, delimiter=',')
+    np.savetxt("trained_model/test_all_train_data.csv", train_dataset, delimiter=',')
+    np.savetxt("trained_model/test_all_label.csv", labels, delimiter=',')
     return train_dataset, labels
 
 
@@ -130,3 +196,46 @@ def load_svm_model(file_path):
     # expected = test_y
     # predicted = model1.predict(test_X)
     return model
+
+
+if __name__ == "__main__":
+    get_init_data()
+    # [1532.6390380859375, 625.6991577148438, 1638.3524169921875, 925.0554809570312][436, 713, 498, 857]
+    # [1537.46240234375, 625.3899536132812, 1645.1719970703125, 917.4693603515625][436, 712, 497, 857]
+    # [1535.240234375, 626.1395263671875, 1661.03125, 924.6998901367188][435, 711, 496, 858]
+    # [1538.7579345703125, 624.2183837890625, 1665.80126953125, 922.0585327148438][436, 709, 496, 859]
+    # [1541.8717041015625, 620.744384765625, 1673.6065673828125, 922.63525390625][437, 706, 496, 858]
+    # [1555.456787109375, 615.5887451171875, 1688.873779296875, 930.5980224609375][438, 704, 496, 859]
+    # [1557.012939453125, 614.5606689453125, 1695.9586181640625, 930.9611206054688][438, 704, 496, 860]
+    # [1560.6324462890625, 611.8527221679688, 1709.2847900390625, 928.3453979492188][438, 703, 496, 859]
+    # [1563.953369140625, 605.14306640625, 1715.025390625, 928.8760375976562][438, 703, 496, 860]
+    # [1568.81298828125, 595.2615966796875, 1725.84521484375, 914.6304321289062][437, 703, 495, 860]
+    # [1574.183349609375, 589.1253662109375, 1734.168212890625, 917.7183837890625][437, 702, 495, 860]
+    # [1583.7086181640625, 592.4740600585938, 1734.60693359375, 874.1961059570312][437, 702, 495, 860]
+    # [1597.03271484375, 585.6586303710938, 1748.3541259765625, 880.1131591796875][437, 702, 495, 861]
+    # [1599.405517578125, 578.9368896484375, 1762.33251953125, 933.2593994140625][437, 701, 494, 860]
+    # [1605.3018798828125, 585.4453125, 1762.04345703125, 934.9387817382812][437, 701, 494, 861]
+    # [1609.35888671875, 585.8103637695312, 1772.913330078125, 935.46435546875][437, 700, 494, 860]
+    # [1609.309814453125, 582.6632080078125, 1780.9468994140625, 932.50830078125][436, 700, 493, 861]
+    # [1611.48291015625, 579.98193359375, 1788.42724609375, 937.2557373046875][436, 700, 493, 861]
+    # [1621.3748779296875, 573.5885009765625, 1797.334228515625, 942.76025390625][436, 699, 493, 861]
+    # [1636.9747314453125, 572.6998291015625, 1816.8759765625, 936.1790771484375][436, 699, 493, 861]
+    # [1632.352783203125, 564.6521606445312, 1826.100341796875, 903.8212280273438][437, 699, 494, 861]
+    # [1638.26806640625, 561.3280029296875, 1842.217041015625, 901.104736328125][437, 700, 495, 863]
+    # [1660.3184814453125, 558.26708984375, 1848.4290771484375, 904.0374755859375][438, 700, 496, 863]
+    # [1677.38671875, 556.77490234375, 1874.7412109375, 952.2470703125][439, 700, 497, 864]
+    # [1689.4029541015625, 545.865234375, 1873.9205322265625, 902.8740844726562][440, 700, 499, 864]
+    # [1697.9102783203125, 545.0020751953125, 1889.518798828125, 909.07421875][440, 701, 499, 866]
+    # [1706.004638671875, 534.8257446289062, 1899.00439453125, 926.7782592773438][441, 701, 501, 866]
+    # [1708.4119873046875, 524.8648071289062, 1908.826171875, 935.6848754882812][442, 701, 502, 866]
+    # [1736.114990234375, 531.4044799804688, 1916.2698974609375, 927.6542358398438][442, 702, 502, 868]
+    # [1747.2578125, 520.622314453125, 1915.76953125, 944.0772705078125][443, 702, 504, 868]
+    # [1755.9654541015625, 515.1502075195312, 1914.33056640625, 948.6547241210938][444, 702, 505, 869]
+    # [1773.71630859375, 518.7667846679688, 1918.524169921875, 933.5415649414062][445, 702, 506, 869]
+    # print(box_iou([0,0,1,1],[0,0,2,2]))
+    box1 = [1755.9654541015625, 515.1502075195312, 1914.33056640625, 948.6547241210938]
+    box2 = [444, 702, 505, 869]
+    print(box_iou(box1, box2))
+    # [1393.3612060546875, 657.8390502929688, 1497.347412109375, 895.8389892578125]
+    # [465, 730, 533, 848]
+    # print(str(int(5) + 1))

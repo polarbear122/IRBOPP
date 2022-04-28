@@ -25,7 +25,7 @@ def svm_trainer(train_data, label):
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_dataset, labels = get_data.read_csv_train_label_data()
+    train_dataset, labels = get_data.read_csv_train_label_data(test=False)
     get_data_at = time.time()
     log.logger.info(
         "svm data to be trained:(%d,%d),%d" % (train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))

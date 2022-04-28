@@ -6,30 +6,33 @@ import sklearn
 from sklearn.linear_model import SGDClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.model_selection import train_test_split
+import calculate.calculate as cal
 from log_config import log
 from train import get_data
 
 
-def sgd_trainer(train_data, label):
-    train_data, test_data, train_label, test_label = \
-        sklearn.model_selection.train_test_split(train_data, label, random_state=1, train_size=0.8, test_size=0.2)
+def sgd_trainer(all_data, all_labels):
+    x_train, x_test, y_train, y_test = \
+        train_test_split(all_data, all_labels, random_state=1, train_size=0.8, test_size=0.2)
     clf = make_pipeline(StandardScaler(),
                         SGDClassifier(max_iter=1000, tol=1e-3, n_jobs=-1))  # 设置训练器
-    clf.fit(train_data, train_label)
+    clf.fit(x_train, y_train)
     print("数据分割完成，开始训练SGD分类器")
-    clf.fit(train_data, train_label.ravel())  # 对训练集部分进行训练
-    train_data_score = clf.score(train_data, train_label) * 100
-    test_data_score = clf.score(test_data, test_label) * 100
+    clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
+    train_data_score = clf.score(x_train, y_train) * 100
+    test_data_score = clf.score(x_test, y_test) * 100
     log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
+    y_pred = clf.predict(x_test)
+    cal.calculate_all(y_test, y_pred)  # 评估计算结果
     s = pickle.dumps(clf)
-    with open(file="trained_model/svm.model", mode="wb+") as f:
+    with open(file="trained_model/sgd.model", mode="wb+") as f:
         f.write(s)
 
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_dataset, labels = get_data.read_csv_train_label_data()
+    train_dataset, labels = get_data.read_csv_train_label_data(test=False)
     get_data_at = time.time()
     log.logger.info(
         "sgd data to be trained:(%d,%d),%d" % (train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
