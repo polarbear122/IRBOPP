@@ -13,14 +13,14 @@ from toolkit.xml_read import xml_read, str_to_int
 def read_csv_train_label_data(test: int):
     # 从csv文件中读取
     if test == 0:
-        pose_array = np.loadtxt("trained_model/test_small_train_data.csv", dtype=np.float_, delimiter=',')
-        label_array = np.loadtxt("trained_model/test_small_label.csv", dtype=np.float_, delimiter=',')
+        pose_array = np.loadtxt("train_data/test_small_train_data.csv", dtype=np.float_, delimiter=',')
+        label_array = np.loadtxt("train_data/test_small_label.csv", dtype=np.float_, delimiter=',')
     elif test == 1:
-        pose_array = np.loadtxt("trained_model/iou_all_train_data.csv", dtype=np.float_, delimiter=',')
-        label_array = np.loadtxt("trained_model/iou_all_label.csv", dtype=np.float_, delimiter=',')
+        pose_array = np.loadtxt("train_data/iou_all_train_data.csv", dtype=np.float_, delimiter=',')
+        label_array = np.loadtxt("train_data/iou_all_label.csv", dtype=np.float_, delimiter=',')
     elif test == 2:
-        pose_array = np.loadtxt("trained_model/center_point_all_train_data.csv", dtype=np.float_, delimiter=',')
-        label_array = np.loadtxt("trained_model/center_point_all_label.csv", dtype=np.float_, delimiter=',')
+        pose_array = np.loadtxt("train_data/center_point_all_train_data.csv", dtype=np.float_, delimiter=',')
+        label_array = np.loadtxt("train_data/center_point_all_label.csv", dtype=np.float_, delimiter=',')
     else:
         print("读取数据的参数错误，test=0:测试用小文件，1:iou 匹配数据，2:中心点匹配数据")
         return
@@ -184,12 +184,17 @@ def get_init_data():
     print("all data saved, shape:", train_dataset.shape, labels.shape, "true shape:", train_data_shape)
     train_dataset = np.asarray(train_dataset)
     labels = np.asarray(labels)
-    np.savetxt("trained_model/test_all_train_data.csv", train_dataset, delimiter=',')
-    np.savetxt("trained_model/test_all_label.csv", labels, delimiter=',')
+    np.savetxt("train_data/test_all_train_data.csv", train_dataset, delimiter=',')
+    np.savetxt("train_data/test_all_label.csv", labels, delimiter=',')
     return train_dataset, labels
 
 
-def load_svm_model(file_path):
+def save_model(file_path, file_name, model):
+    with open(file=file_path + file_name, mode="wb+") as f:
+        f.write(model)
+
+
+def load_model(file_path):
     with open(file=file_path, mode="wb+") as trained_model:
         s2 = trained_model.read()
         model = pickle.loads(s2)
@@ -200,42 +205,6 @@ def load_svm_model(file_path):
 
 if __name__ == "__main__":
     get_init_data()
-    # [1532.6390380859375, 625.6991577148438, 1638.3524169921875, 925.0554809570312][436, 713, 498, 857]
-    # [1537.46240234375, 625.3899536132812, 1645.1719970703125, 917.4693603515625][436, 712, 497, 857]
-    # [1535.240234375, 626.1395263671875, 1661.03125, 924.6998901367188][435, 711, 496, 858]
-    # [1538.7579345703125, 624.2183837890625, 1665.80126953125, 922.0585327148438][436, 709, 496, 859]
-    # [1541.8717041015625, 620.744384765625, 1673.6065673828125, 922.63525390625][437, 706, 496, 858]
-    # [1555.456787109375, 615.5887451171875, 1688.873779296875, 930.5980224609375][438, 704, 496, 859]
-    # [1557.012939453125, 614.5606689453125, 1695.9586181640625, 930.9611206054688][438, 704, 496, 860]
-    # [1560.6324462890625, 611.8527221679688, 1709.2847900390625, 928.3453979492188][438, 703, 496, 859]
-    # [1563.953369140625, 605.14306640625, 1715.025390625, 928.8760375976562][438, 703, 496, 860]
-    # [1568.81298828125, 595.2615966796875, 1725.84521484375, 914.6304321289062][437, 703, 495, 860]
-    # [1574.183349609375, 589.1253662109375, 1734.168212890625, 917.7183837890625][437, 702, 495, 860]
-    # [1583.7086181640625, 592.4740600585938, 1734.60693359375, 874.1961059570312][437, 702, 495, 860]
-    # [1597.03271484375, 585.6586303710938, 1748.3541259765625, 880.1131591796875][437, 702, 495, 861]
-    # [1599.405517578125, 578.9368896484375, 1762.33251953125, 933.2593994140625][437, 701, 494, 860]
-    # [1605.3018798828125, 585.4453125, 1762.04345703125, 934.9387817382812][437, 701, 494, 861]
-    # [1609.35888671875, 585.8103637695312, 1772.913330078125, 935.46435546875][437, 700, 494, 860]
-    # [1609.309814453125, 582.6632080078125, 1780.9468994140625, 932.50830078125][436, 700, 493, 861]
-    # [1611.48291015625, 579.98193359375, 1788.42724609375, 937.2557373046875][436, 700, 493, 861]
-    # [1621.3748779296875, 573.5885009765625, 1797.334228515625, 942.76025390625][436, 699, 493, 861]
-    # [1636.9747314453125, 572.6998291015625, 1816.8759765625, 936.1790771484375][436, 699, 493, 861]
-    # [1632.352783203125, 564.6521606445312, 1826.100341796875, 903.8212280273438][437, 699, 494, 861]
-    # [1638.26806640625, 561.3280029296875, 1842.217041015625, 901.104736328125][437, 700, 495, 863]
-    # [1660.3184814453125, 558.26708984375, 1848.4290771484375, 904.0374755859375][438, 700, 496, 863]
-    # [1677.38671875, 556.77490234375, 1874.7412109375, 952.2470703125][439, 700, 497, 864]
-    # [1689.4029541015625, 545.865234375, 1873.9205322265625, 902.8740844726562][440, 700, 499, 864]
-    # [1697.9102783203125, 545.0020751953125, 1889.518798828125, 909.07421875][440, 701, 499, 866]
-    # [1706.004638671875, 534.8257446289062, 1899.00439453125, 926.7782592773438][441, 701, 501, 866]
-    # [1708.4119873046875, 524.8648071289062, 1908.826171875, 935.6848754882812][442, 701, 502, 866]
-    # [1736.114990234375, 531.4044799804688, 1916.2698974609375, 927.6542358398438][442, 702, 502, 868]
-    # [1747.2578125, 520.622314453125, 1915.76953125, 944.0772705078125][443, 702, 504, 868]
-    # [1755.9654541015625, 515.1502075195312, 1914.33056640625, 948.6547241210938][444, 702, 505, 869]
-    # [1773.71630859375, 518.7667846679688, 1918.524169921875, 933.5415649414062][445, 702, 506, 869]
-    # print(box_iou([0,0,1,1],[0,0,2,2]))
     box1 = [1755.9654541015625, 515.1502075195312, 1914.33056640625, 948.6547241210938]
     box2 = [444, 702, 505, 869]
     print(box_iou(box1, box2))
-    # [1393.3612060546875, 657.8390502929688, 1497.347412109375, 895.8389892578125]
-    # [465, 730, 533, 848]
-    # print(str(int(5) + 1))
