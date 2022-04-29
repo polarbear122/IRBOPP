@@ -4,7 +4,6 @@ import pickle
 import time
 
 import sklearn
-
 from sklearn import svm
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import SGDClassifier
@@ -13,10 +12,11 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 import calculate.calculate as cal
+import train.data_resample as data_resample
+
 from log_config import log
 from train import get_data
-# from train.data_resample import data_resample
-import train.data_resample as data_resample
+from train.data_resample import sample_pipeline
 
 
 def sgd_trainer(all_data, all_labels):
@@ -24,11 +24,7 @@ def sgd_trainer(all_data, all_labels):
         train_test_split(all_data, all_labels, random_state=1, train_size=0.6, test_size=0.4)
     clf = make_pipeline(StandardScaler(),
                         SGDClassifier(max_iter=1000, tol=1e-3, n_jobs=-1, loss="log", penalty="l1"))  # 设置训练器
-    print("数据处理结果1:", x_train.shape, y_train.shape)
-    x_train, y_train = data_resample.naive_random_under_sample(x_train, y_train)
-    print("数据处理结果2:", x_train.shape, y_train.shape)
-    x_train, y_train = data_resample.smote_sample(x_train, y_train)
-    print("数据处理结果3:", x_train.shape, y_train.shape)
+    x_train, y_train = sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     train_data_score = clf.score(x_train, y_train) * 100
     test_data_score = clf.score(x_test, y_test) * 100
@@ -43,12 +39,10 @@ def svm_trainer(all_data, all_labels):
     x_train, x_test, y_train, y_test = \
         sklearn.model_selection.train_test_split(all_data, all_labels, random_state=1, train_size=0.05, test_size=0.95)
     clf = svm.SVC(C=1, kernel='rbf', gamma=1, decision_function_shape='ovr')  # 设置训练器
-    print("数据处理结果1:", x_train.shape, y_train.shape)
+
     x_train, y_train = data_resample.naive_random_under_sample(x_train, y_train)
-    print("数据处理结果2:", x_train.shape, y_train.shape)
     x_train, y_train = data_resample.smote_sample(x_train, y_train)
-    print("数据处理结果3:", x_train.shape, y_train.shape)
-    clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
+
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     train_data_score = clf.score(x_train, y_train) * 100
     test_data_score = clf.score(x_test, y_test) * 100
@@ -61,8 +55,9 @@ def svm_trainer(all_data, all_labels):
 
 def forest_trainer(all_data, all_labels):
     x_train, x_test, y_train, y_test = \
-        train_test_split(all_data, all_labels, random_state=1, train_size=0.8, test_size=0.2)
+        train_test_split(all_data, all_labels, random_state=1, train_size=0.6, test_size=0.4)
     clf = RandomForestRegressor(n_estimators=100, max_depth=6, random_state=0, verbose=True, n_jobs=-1)
+
     x_resampled, y_resampled = data_resample.adasyn(x_train, y_train)
     clf.fit(x_resampled, y_resampled.ravel())  # 对训练集部分进行训练
     train_data_score = clf.score(x_train, y_train) * 100
@@ -76,18 +71,13 @@ def forest_trainer(all_data, all_labels):
 
 def linear_svc_trainer(all_data, all_labels):
     x_train, x_test, y_train, y_test = \
-        train_test_split(all_data, all_labels, random_state=1, train_size=0.8, test_size=0.2)
+        train_test_split(all_data, all_labels, random_state=1, train_size=0.6, test_size=0.4)
     clf = make_pipeline(StandardScaler(),
                         svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, tol=0.0001, C=1.0,
-                                      multi_class='ovr',
-                                      fit_intercept=True, intercept_scaling=1, class_weight=None, verbose=0,
-                                      random_state=None,
-                                      max_iter=1000))
-    print("数据处理结果1:", x_train.shape, y_train.shape)
-    x_train, y_train = data_resample.naive_random_under_sample(x_train, y_train)
-    print("数据处理结果2:", x_train.shape, y_train.shape)
-    x_train, y_train = data_resample.smote_sample(x_train, y_train)
-    print("数据处理结果3:", x_train.shape, y_train.shape)
+                                      multi_class='ovr', fit_intercept=True, intercept_scaling=1, class_weight=None,
+                                      verbose=0, random_state=None, max_iter=1000))
+
+    x_train, y_train = data_resample.sample_pipeline(x_train, y_train)
 
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     train_data_score = clf.score(x_train, y_train) * 100
@@ -99,21 +89,22 @@ def linear_svc_trainer(all_data, all_labels):
     return s
 
 
-def default(all_data, all_labels):  # 默认情况下执行的函数
+def default(_all_data, _all_labels):  # 默认情况下执行的函数
     print('未选择训练器')
 
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_dataset, labels = get_data.read_csv_train_label_data(test=2)
+    train_dataset, labels = get_data.read_csv_train_label_data(test=1)
+
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC"]
-    train_model = {"SGD": sgd_trainer,
-                   "SVM": svm_trainer,
-                   "Forest": forest_trainer,
+    train_model = {"SGD"      : sgd_trainer,
+                   "SVM"      : svm_trainer,
+                   "Forest"   : forest_trainer,
                    "LinearSVC": linear_svc_trainer,
                    }
-    trainer = name_list[0]  # 获取选择
+    trainer = name_list[3]  # 选择训练器
     log.logger.info(
         "开始训练%s分类器:数据规模(%d,%d),%d" % (trainer, train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
 

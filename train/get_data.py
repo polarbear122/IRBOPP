@@ -38,17 +38,18 @@ def normalize_face_point(pose_array: np.array):
     """
     face_range = [0, 1, 2, 3, 4, 17, 18]
     normalize_array = np.zeros((len(pose_array), 1))
-    # for point_conf_position in face_range:
-    #     output_range.append(point_conf_position * 3 + 2)
+
     box_width = np.max(pose_array, axis=1)  # 行人的宽度，shape=(number,1)
     face_height = pose_array[:, 18 * 3 + 1] - pose_array[:, 17 * 3 + 1]  # 脸部的高度
     face_center_x, face_center_y = pose_array[:, 1], pose_array[:, 2]  # 脸部中心点（鼻子）的坐标，列向量
     for position in face_range:
         sub_x, sub_y = pose_array[:, position] - face_center_x, pose_array[:, position + 1] - face_center_y
-        norm_x = np.divide(sub_x, box_width, out=np.zeros_like(sub_x), where=box_width != 0).reshape(-1, 1)
-        norm_y = np.divide(sub_y, face_height, out=np.zeros_like(sub_y), where=face_height != 0).reshape(-1, 1)
-        normalize_array = np.concatenate((normalize_array, norm_x), axis=1)  # 宽度方向
-        normalize_array = np.concatenate((normalize_array, norm_y), axis=1)  # 高度方向
+        # 如果被除数为0，则将结果置为1
+        norm_x = np.divide(sub_x, box_width, out=np.ones_like(sub_x), where=box_width != 0).reshape(-1, 1)
+        norm_y = np.divide(sub_y, face_height, out=np.ones_like(sub_y), where=face_height != 0).reshape(-1, 1)
+
+        normalize_array = np.concatenate((normalize_array, norm_x), axis=1)  # 特征点的x轴值
+        normalize_array = np.concatenate((normalize_array, norm_y), axis=1)  # 特征点的y轴值
         normalize_array = np.concatenate((normalize_array, pose_array[:, position + 2].reshape(-1, 1)), axis=1)  # 可见性
     return normalize_array[:, 1:]
 

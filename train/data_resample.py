@@ -1,18 +1,23 @@
 # 数据上采样、下采样，解决数据不平衡问题
-from imblearn.over_sampling import RandomOverSampler
-from imblearn.under_sampling import RandomUnderSampler
-from imblearn.over_sampling import SMOTE
+from imblearn.over_sampling import ADASYN
 from imblearn.over_sampling import BorderlineSMOTE
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.over_sampling import SMOTE
 from imblearn.over_sampling import SVMSMOTE
 from imblearn.under_sampling import ClusterCentroids
-from imblearn.over_sampling import ADASYN
 from imblearn.under_sampling import NearMiss
+from imblearn.under_sampling import RandomUnderSampler
+
+from collections import Counter
+from imblearn.pipeline import Pipeline
 
 
 # 朴素随机过采样（上采样） ,从少数类的样本中进行随机采样来增加新的样本
 def naive_random_over_sample(data, label):
     ros = RandomOverSampler(random_state=0, shrinkage=0.1)
+    print("naive_random_over_sample 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = ros.fit_resample(data, label)
+    print("naive_random_over_sample 后 data,label shape:", x_resampled.shape, y_resampled.shape)
     return x_resampled, y_resampled
 
 
@@ -27,14 +32,18 @@ def naive_random_over_sample(data, label):
 # 另一方面是生成一些没有提供有益信息的样本。
 def smote_sample(data, label):
     ros = SMOTE(sampling_strategy="auto", k_neighbors=7, n_jobs=-1)
+    print("smote_sample 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = ros.fit_resample(data, label)
+    print("smote_sample 后 data,label shape:", x_resampled.shape, y_resampled.shape)
     return x_resampled, y_resampled
 
 
 def svm_smote_sample(data, label):
     ros = SVMSMOTE(sampling_strategy="auto", random_state=0, k_neighbors=5, n_jobs=-1, m_neighbors=10,
                    svm_estimator=None, out_step=0.5)
+    print("svm_smote_sample 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = ros.fit_resample(data, label)
+    print("svm_smote_sample 后 data,label shape:", x_resampled.shape, y_resampled.shape)
     return x_resampled, y_resampled
 
 
@@ -47,15 +56,19 @@ def cluster_centroids(data, label):
 
 # 自适应综合采样（ADASYN）首先根据最终的平衡程度设定总共需要生成的新少数类样本数量 ，然后为每个少数类样本x计算分布比例。
 def adasyn(data, label):
+    print("adasyn 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = ADASYN().fit_resample(data, label)
+    print("adasyn 后 data,label shape:", x_resampled.shape, y_resampled.shape)
     return x_resampled, y_resampled
 
 
 # 下采样
 # 朴素随机欠采样（下采样）,与过采样相反，欠采样是从多数类样本中随机选择少量样本，再合并原有少数类样本作为新的训练数据集。
 def naive_random_under_sample(data, label):
-    ros = RandomUnderSampler(sampling_strategy=0.5,random_state=0)
+    ros = RandomUnderSampler(sampling_strategy="auto", random_state=0)
+    print("naive_random_under_sample 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = ros.fit_resample(data, label)
+    print("naive_random_under_sample 后 data,label shape:", x_resampled.shape, y_resampled.shape)
     return x_resampled, y_resampled
 
 
@@ -63,31 +76,47 @@ def naive_random_under_sample(data, label):
 def balance_cascade(data, label):
     bc = BorderlineSMOTE(
         sampling_strategy="auto", random_state=None, k_neighbors=5, n_jobs=-1, m_neighbors=10, kind="borderline-1")
+    print("balance_cascade 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = bc.fit_resample(data, label)
+    print("balance_cascade 后 data,label shape:", x_resampled.shape, y_resampled.shape)
     return x_resampled, y_resampled
 
 
 def near_miss(data, label):
     ee = NearMiss(random_state=0, version=1)
+    print("near_miss 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = ee.fit_resample(data, label)
+    print("near_miss 后 data,label shape:", x_resampled.shape, y_resampled.shape)
     return x_resampled, y_resampled
 
 
-def default(all_data, all_labels):  # 默认情况下执行的函数
+def default(_all_data, _all_labels):  # 默认情况下执行的函数
     print('未选择数据采样函数')
 
 
 def data_resample(method_id: int, x_train, y_train):
     name_list = ["naive_random_over_sample", "smote_sample", "cluster_centroids", "adasyn", "naive_random_under_sample",
                  "balance_cascade", "near_miss", ]
-    sample_method = {"naive_random_over_sample": naive_random_over_sample,
-                     "smote_sample": smote_sample,
-                     "cluster_centroids": cluster_centroids,
-                     "adasyn": adasyn,
+    sample_method = {"naive_random_over_sample" : naive_random_over_sample,
+                     "smote_sample"             : smote_sample,
+                     "cluster_centroids"        : cluster_centroids,
+                     "adasyn"                   : adasyn,
                      "naive_random_under_sample": naive_random_under_sample,
-                     "balance_cascade": balance_cascade,
-                     "near_miss": near_miss,
+                     "balance_cascade"          : balance_cascade,
+                     "near_miss"                : near_miss,
                      }
     method = name_list[method_id]  # 获取选择
     x_resampled, y_resampled = sample_method.get(method, default)(x_train, y_train)  # 执行对应的函数，如果没有就执行默认的函数
     return x_resampled, y_resampled
+
+
+def sample_pipeline(data, label):
+    # 采样的pipeline
+    over = SMOTE(sampling_strategy="auto")
+    under = RandomUnderSampler(sampling_strategy="auto")
+    steps = [('o', over), ('u', under)]
+    pipeline = Pipeline(steps=steps)
+    print(Counter(label))
+    data, label = pipeline.fit_resample(data, label)
+    print(Counter(label))
+    return data, label
