@@ -1,3 +1,4 @@
+# 输入视频流，输出label （0，1）
 # 训练图像级别的pose svm分类器,训练时间与数据量的平方成正比，数据量超过一万时很慢。
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html#sklearn.linear_model.SGDClassifier
 import pickle
@@ -75,10 +76,9 @@ def linear_svc_trainer(all_data, all_labels):
     clf = make_pipeline(StandardScaler(),
                         svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, tol=0.0001, C=1.0,
                                       multi_class='ovr', fit_intercept=True, intercept_scaling=1, class_weight=None,
-                                      verbose=0, random_state=None, max_iter=1000))
+                                      verbose=0, random_state=None, max_iter=2 ** 10))
 
-    x_train, y_train = data_resample.sample_pipeline(x_train, y_train)
-
+    # x_train, y_train = data_resample.sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     train_data_score = clf.score(x_train, y_train) * 100
     test_data_score = clf.score(x_test, y_test) * 100
@@ -95,7 +95,7 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_dataset, labels = get_data.read_csv_train_label_data(test=1)
+    train_dataset, labels = get_data.read_csv_train_label_data(data_id=1, output_type=1)
 
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC"]
@@ -104,12 +104,12 @@ if __name__ == "__main__":
                    "Forest"   : forest_trainer,
                    "LinearSVC": linear_svc_trainer,
                    }
-    trainer = name_list[3]  # 选择训练器
+    trainer = name_list[0]  # 选择训练器
     log.logger.info(
         "开始训练%s分类器:数据规模(%d,%d),%d" % (trainer, train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
 
     model = train_model.get(trainer, default)(train_dataset, labels)  # 执行对应的函数，如果没有就执行默认的函数
-    get_data.save_model("trained_model/", trainer + ".model", model)
+    get_data.save_model("trained_model/", trainer + "_video_ml.model", model)
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序

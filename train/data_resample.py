@@ -114,7 +114,10 @@ def sample_pipeline(data, label):
     # 采样的pipeline
     over = SMOTE(sampling_strategy="auto")
     under = RandomUnderSampler(sampling_strategy="auto")
-    steps = [('o', over), ('u', under)]
+    border_smote = BorderlineSMOTE(
+        sampling_strategy="auto", random_state=None, k_neighbors=5, n_jobs=-1, m_neighbors=10, kind="borderline-1")
+    # ('o', over), ('u', under), ('border_smote', border_smote)
+    steps = [('o', over)]
     pipeline = Pipeline(steps=steps)
     print(Counter(label))
     data, label = pipeline.fit_resample(data, label)

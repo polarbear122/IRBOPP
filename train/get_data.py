@@ -10,15 +10,15 @@ from toolkit.xml_read import xml_read, str_to_int
 
 
 # test=0:测试用小文件，1:iou all数据，2:中心点检测得到的数据
-def read_csv_train_label_data(test: int):
+def read_csv_train_label_data(data_id: int, output_type: int):
     # 从csv文件中读取
-    if test == 0:
+    if data_id == 0:
         pose_array = np.loadtxt("train_data/test_small_train_data.csv", dtype=np.float_, delimiter=',')
         label_array = np.loadtxt("train_data/test_small_label.csv", dtype=np.float_, delimiter=',')
-    elif test == 1:
+    elif data_id == 1:
         pose_array = np.loadtxt("train_data/iou_all_train_data.csv", dtype=np.float_, delimiter=',')
         label_array = np.loadtxt("train_data/iou_all_label.csv", dtype=np.float_, delimiter=',')
-    elif test == 2:
+    elif data_id == 2:
         pose_array = np.loadtxt("train_data/center_point_all_train_data.csv", dtype=np.float_, delimiter=',')
         label_array = np.loadtxt("train_data/center_point_all_label.csv", dtype=np.float_, delimiter=',')
     else:
@@ -27,15 +27,22 @@ def read_csv_train_label_data(test: int):
     log.logger.info("csv data has been load")
     num_start, num_stop = 0, 99623  # 总共有84141条数据,[start,stop),前开后闭区间
     # return pose_array[num_start:num_stop, output_range], label_array[num_start:num_stop]  # 使用逗号进行裁剪维度分割
-    return normalize_face_point(pose_array)[num_start:num_stop], label_array[num_start:num_stop]
+
+    if output_type == 0:
+        # 单帧姿势
+        return normalize_face_point(pose_array)[num_start:num_stop], label_array[num_start:num_stop]
+    elif output_type == 1:
+        # 视频流姿势
+        train_data, label = normalize_face_point_stream(pose_array, label_array)
+        return train_data, label
+    else:
+        return "未选定输出为视频流姿势或单帧姿势"
 
 
+# 正则化脸部特征点
+# 使用0位置（鼻子）作为零点，所有特征点减去该点坐标，分别除以人的box宽和17，18特征点（额头、下巴）之间高度
+# [0, 1, 2, 3, 4, 17, 18] 脸部的特征点范围，共7个特征点
 def normalize_face_point(pose_array: np.array):
-    """
-    正则化脸部特征点
-    使用0位置（鼻子）作为零点，所有特征点减去该点坐标，分别除以人的box宽和17，18特征点（额头、下巴）之间高度
-    [0, 1, 2, 3, 4, 17, 18] 脸部的特征点范围，共7个特征点
-    """
     face_range = [0, 1, 2, 3, 4, 17, 18]
     normalize_array = np.zeros((len(pose_array), 1))
 
@@ -52,6 +59,46 @@ def normalize_face_point(pose_array: np.array):
         normalize_array = np.concatenate((normalize_array, norm_y), axis=1)  # 特征点的y轴值
         normalize_array = np.concatenate((normalize_array, pose_array[:, position + 2].reshape(-1, 1)), axis=1)  # 可见性
     return normalize_array[:, 1:]
+
+
+# 一秒三十帧，每次输出三十帧为一个视频流，在每行数据后面直接append，标签采用“或”方式相加
+def normalize_face_point_stream(pose_array: np.array, labels: np.array):
+    f_p_stream, features_len = 6, 21  # f_p_stream每个流中的帧数，features_len特征长度
+    face_range = [0, 1, 2, 3, 4, 17, 18]
+    norm_array = np.zeros((len(pose_array), 1))  # norm_array 正则化数组
+    box_width = np.max(pose_array, axis=1)  # 行人的宽度，shape=(number,1)
+    face_height = pose_array[:, 18 * 3 + 1] - pose_array[:, 17 * 3 + 1]  # 脸部的高度
+    face_center_x, face_center_y = pose_array[:, 1], pose_array[:, 2]  # 脸部中心点（鼻子）的坐标，列向量
+    for position in face_range:
+        sub_x, sub_y = pose_array[:, position] - face_center_x, pose_array[:, position + 1] - face_center_y
+        # 如果被除数为0，则将结果置为1
+        norm_x = np.divide(sub_x, box_width, out=np.ones_like(sub_x), where=box_width != 0).reshape(-1, 1)
+        norm_y = np.divide(sub_y, face_height, out=np.ones_like(sub_y), where=face_height != 0).reshape(-1, 1)
+
+        norm_array = np.concatenate((norm_array, norm_x), axis=1)  # 特征点的x轴值
+        norm_array = np.concatenate((norm_array, norm_y), axis=1)  # 特征点的y轴值
+        norm_array = np.concatenate((norm_array, pose_array[:, position + 2].reshape(-1, 1)), axis=1)  # 可见性
+
+    norm_array = norm_array[:, 1:]  # 1:代表裁剪之前的初始0值
+    sample_method = 1
+    if sample_method == 0:
+        # 1、采用reshape的方式采样，数据量缩减为原来的(1/f_p_stream)
+        norm_array = norm_array[:len(norm_array) // f_p_stream * f_p_stream, :]  # 先除后乘,避免无法reshape
+        stream_array = norm_array.reshape(-1, f_p_stream * features_len)
+        labels = labels[:len(labels) // f_p_stream * f_p_stream]
+        labels = labels.reshape(-1, f_p_stream)
+        stream_labels = np.amax(labels, axis=1)
+        return stream_array, stream_labels
+    elif sample_method == 1:
+        #  2、采用叠加的方式，不会减少数据量
+        for i in range(len(norm_array) - f_p_stream):
+            array_30_to_1 = norm_array[i:i + f_p_stream].reshape(1, -1)  # 将f_p_stream帧数据变成一行
+            label_30_to_1 = np.amax(labels[i:i + f_p_stream], axis=1)
+            stream_array = norm_array.reshape(-1, f_p_stream * features_len)
+            stream_labels = np.amax(labels, axis=1)
+
+    else:
+        print("error 未选择正则化输出中，图像转视频流的方法")
 
 
 def get_key_points(keypoints: list):
