@@ -30,7 +30,8 @@ def read_csv_train_label_data(data_id: int, output_type: int):
 
     if output_type == 0:
         # 单帧姿势
-        return normalize_face_point(pose_array)[num_start:num_stop], label_array[num_start:num_stop]
+        train_data, label = normalize_face_point(pose_array), label_array
+        return train_data[num_start:num_stop], label[num_start:num_stop]
     elif output_type == 1:
         # 视频流姿势
         train_data, label = normalize_face_point_stream(pose_array, label_array)
@@ -80,6 +81,7 @@ def normalize_face_point_stream(pose_array: np.array, labels: np.array):
         norm_array = np.concatenate((norm_array, pose_array[:, position + 2].reshape(-1, 1)), axis=1)  # 可见性
 
     norm_array = norm_array[:, 1:]  # 1:代表裁剪之前的初始0值
+    stream_array, stream_labels = np.zeros((f_p_stream * features_len), 1), np.zeros((f_p_stream * features_len), 1)
     sample_method = 1
     if sample_method == 0:
         # 1、采用reshape的方式采样，数据量缩减为原来的(1/f_p_stream)
@@ -88,17 +90,15 @@ def normalize_face_point_stream(pose_array: np.array, labels: np.array):
         labels = labels[:len(labels) // f_p_stream * f_p_stream]
         labels = labels.reshape(-1, f_p_stream)
         stream_labels = np.amax(labels, axis=1)
-        return stream_array, stream_labels
     elif sample_method == 1:
-        #  2、采用叠加的方式，不会减少数据量
+        #  2、采用叠加的方式,数据叠加到同一行,不会减少数据量
         for i in range(len(norm_array) - f_p_stream):
             array_30_to_1 = norm_array[i:i + f_p_stream].reshape(1, -1)  # 将f_p_stream帧数据变成一行
-            label_30_to_1 = np.amax(labels[i:i + f_p_stream], axis=1)
-            stream_array = norm_array.reshape(-1, f_p_stream * features_len)
-            stream_labels = np.amax(labels, axis=1)
-
+            stream_array = np.concatenate((stream_array, array_30_to_1), axis=0)
+            stream_labels = np.amax(labels[i:i + f_p_stream], axis=1)  # 找出该三十行数据中最大值
     else:
         print("error 未选择正则化输出中，图像转视频流的方法")
+    return stream_array, stream_labels
 
 
 def get_key_points(keypoints: list):
