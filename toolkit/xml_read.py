@@ -32,8 +32,8 @@ def jaad_read(xml_file_path, output_file, video_id):
             continue
         is_repeat += 1
         if is_repeat >= 2:
-            logging.info(xml_file_path, "there are two box in one video")
-            print(xml_file_path, "there are two box in one video")
+            logging.info(xml_file_path, "there are two box in one data_by_video")
+            print(xml_file_path, "there are two box in one data_by_video")
         for annotation in i["box"]:
             is_look = annotation["attribute"][2]["#text"]
             xbr = str_to_int(annotation["@xbr"])  # 左上角，右下角 (top-left, bottom-right)

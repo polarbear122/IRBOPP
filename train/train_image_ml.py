@@ -15,16 +15,17 @@ import calculate.calculate as cal
 import train.data_resample as data_resample
 
 from log_config import log
-from train import get_data
+from train import get_data, read_data
 from train.data_resample import sample_pipeline
 
 
 def sgd_trainer(all_data, all_labels):
     x_train, x_test, y_train, y_test = \
         train_test_split(all_data, all_labels, random_state=1, train_size=0.6, test_size=0.4)
+    log.logger.info("image训练开始-------------------------------------------")
     clf = make_pipeline(StandardScaler(),
                         SGDClassifier(max_iter=1000, tol=1e-3, n_jobs=-1, loss="log", penalty="l1"))  # 设置训练器
-    x_train, y_train = sample_pipeline(x_train, y_train)
+    # x_train, y_train = sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     train_data_score = clf.score(x_train, y_train) * 100
     test_data_score = clf.score(x_test, y_test) * 100
@@ -94,8 +95,9 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_dataset, labels = get_data.read_csv_train_label_data(data_id=1, output_type=0)
-
+    print("re")
+    train_dataset, labels, _ = read_data.read_csv_train_label_data(data_id=3, output_type=1)
+    print("rr")
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC"]
     train_model = {"SGD"      : sgd_trainer,
@@ -108,7 +110,7 @@ if __name__ == "__main__":
         "开始训练%s分类器:数据规模(%d,%d),%d" % (trainer, train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
 
     model = train_model.get(trainer, default)(train_dataset, labels)  # 执行对应的函数，如果没有就执行默认的函数
-    get_data.save_model("trained_model/", trainer + "_image_ml.model", model)
+    get_data.save_model("trained_model/", trainer + "_image_unsampled_ml.model", model)
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序
