@@ -73,7 +73,7 @@ def box_iou(box1, box2):
     return iou
 
 
-def get_train_data(jaad_anno_path, alpha_pose_path, video_id):
+def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
     x, y = [], []  # # key points 0 1 2 3 4 17 18 label looking not-looking
     alpha_pose = read_json(alpha_pose_path)
     jaad_anno = xml_read(jaad_anno_path)
@@ -105,6 +105,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id):
             max_iou = 0.6
             pose_box = []  # alpha pose的box位置,json文件中为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（中心点，宽高）格式
+            img_frame_id = 0
             plot_max_box = []
             for pose in alpha_pose:
                 if pose["score"] < 1:
@@ -119,17 +120,18 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id):
                         x_keypoints_proposal = get_key_points(pose["keypoints"])
                         max_pose_box = mid_width_height_box
                         plot_max_box = pose_box
+                        img_frame_id = int(annotation["@frame"])
                         max_iou = iou_val
                 elif pose["image_id"] == str(int(annotation["@frame"]) + 1) + ".jpg":
                     break
             is_look = annotation["attribute"][2]["#text"]
             if x_keypoints_proposal and max_iou > 0.6:
-                x.append(x_keypoints_proposal + max_pose_box)
+                label = 0
                 if is_look == "looking":
-                    y.append(1)
-                else:
-                    y.append(0)
-                need_plot = True
+                    label = 1
+                y.append(label)
+                x.append([int_video_id] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
+                need_plot = False
                 if need_plot and pose_box and max_iou > 0.6:
                     plot_img = plot_pose_box_look(plot_max_box, annotation, is_look, video_id, x_keypoints_proposal)
                     # video_pose_box.write(plot_img)
@@ -156,18 +158,18 @@ def get_stream_data():
 
 
 def get_init_data():
-    train_data_shape = 78 + 4  # 训练的数据的列的大小为7，总训练的数据格式为(number_of_data,train_data_shape)
+    train_data_shape = 85  # 训练的数据的列的大小为7，总训练的数据格式为(number_of_data,train_data_shape)
     train_dataset, labels = np.zeros((1, train_data_shape), float), np.zeros((1, 1), float)
     for i in range(1, 347):
         video_id = "video_" + str(i).zfill(4)
         xml_anno_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
         # output_data_path = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
         alpha_pose_path = "E:/CodeResp/pycode/DataSet/pose_result/" + video_id + "/alphapose-results.json"
-        x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id)
+        x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id, i)
         if x.shape[1] == train_data_shape:
             x_array, y_array = np.asarray(x), np.asarray(y)
-            # np.savetxt("train_data/iou/data_by_video/data" + str(i) + ".csv", x_array, delimiter=',')
-            # np.savetxt("train_data/iou/data_by_video/label" + str(i) + ".csv", y_array, delimiter=',')
+            np.savetxt("train_data/iou/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
+            np.savetxt("train_data/iou/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
             train_dataset = np.concatenate((train_dataset, x))
             labels = np.concatenate((labels, y))
     # print("all data saved, shape:", train_dataset.shape, labels.shape, "true shape:", train_data_shape)
