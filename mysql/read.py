@@ -14,8 +14,8 @@ if __name__ == "__main__":
     cursor = db.cursor()
     result = []
     # 查询数据库并打印内容
-    for i in range(10):
-        cursor.execute("select * from alpha_pose where id between " + str(i * 10000) + " and " + str(i * 10000))
+    for i in range(20):
+        cursor.execute("select * from alpha_pose where id between " + str(i * 10000) + " and " + str((i+1) * 10000))
         result.append(cursor.fetchall())
         print("len result: ", len(result))
     end = time.time()

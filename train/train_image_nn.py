@@ -1,10 +1,9 @@
 # import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as nn_func
+
 import calculate.calculate as cal
-from train import get_data
-from torch.autograd import Variable
-import torch.nn as nn
+from toolkit import get_data
 
 
 class Net(torch.nn.Module):

@@ -1,5 +1,6 @@
 # 训练图像级别的pose svm分类器,训练时间与数据量的平方成正比，数据量超过一万时很慢。
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html#sklearn.linear_model.SGDClassifier
+import os
 import pickle
 import time
 
@@ -12,11 +13,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 import calculate.calculate as cal
-import train.data_resample as data_resample
-
+import toolkit.data_resample as data_resample
 from log_config import log
-from train import get_data, read_data
-from train.data_resample import sample_pipeline
+from toolkit import get_data, read_data
 
 
 def sgd_trainer(all_data, all_labels):
@@ -76,7 +75,7 @@ def linear_svc_trainer(all_data, all_labels):
     clf = make_pipeline(StandardScaler(),
                         svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, tol=0.0001, C=1.0,
                                       multi_class='ovr', fit_intercept=True, intercept_scaling=1, class_weight=None,
-                                      verbose=0, random_state=None, max_iter=2 ** 10))
+                                      verbose=0, random_state=None, max_iter=2 ** 12))
 
     # x_train, y_train = data_resample.sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
@@ -96,7 +95,7 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 if __name__ == "__main__":
     start_at = time.time()
     print("re")
-    train_dataset, labels, _ = read_data.read_csv_train_label_data(data_id=3, output_type=1)
+    train_dataset, labels = read_data.read_csv_train_label_data(data_id=2, output_type=1)
     print("rr")
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC"]
@@ -105,7 +104,8 @@ if __name__ == "__main__":
                    "Forest"   : forest_trainer,
                    "LinearSVC": linear_svc_trainer,
                    }
-    trainer = name_list[0]  # 选择训练器
+    trainer = name_list[3]  # 选择训练器
+    log.logger.info("%s --训练开始--------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info(
         "开始训练%s分类器:数据规模(%d,%d),%d" % (trainer, train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
 

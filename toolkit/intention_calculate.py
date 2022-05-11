@@ -1,11 +1,11 @@
-# 课程：人机协作与交互作业
+# 课程：人机协作与交互作业，利用腿部夹角检测行人过马路意图
 import time
 
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from read_pose_data import read_json
+from toolkit.read_pose_data import read_json
 
 
 def plot_line(x_axis_data, y_axis_data):

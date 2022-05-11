@@ -4,7 +4,7 @@ import cv2
 import numpy as np
 from toolkit.read_pose_data import read_json
 from toolkit.xml_read import xml_read, str_to_int
-from train.read_data import normalize_face_point_stream
+from toolkit.read_data import normalize_face_point_stream
 
 
 def get_key_points(keypoints: list):
@@ -142,8 +142,8 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
 
 
 def get_stream_data():
-    data_path = "train_data/iou/data_by_video/single/"
-    label_path = "train_data/iou/data_by_video/single/"
+    data_path = "../train/train_data/iou/data_by_video/single/"
+    label_path = "../train/train_data/iou/data_by_video/single/"
     for str_id in range(1, 347):
         try:
             pose_arr = np.loadtxt(data_path + "data" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')

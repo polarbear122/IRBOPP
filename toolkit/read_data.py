@@ -1,40 +1,28 @@
 import numpy as np
-
+import pandas as pd
 from log_config import log
+import time
 
 
 # test=0:测试用小文件，1:iou all数据，2:中心点检测得到的数据
 def read_csv_train_label_data(data_id: int, output_type: int):
-    number_oftest = 374
+    number_oftest = 347
     # 从csv文件中读取
-    if data_id == 0:
-        pose_arr = np.loadtxt("train_data/test_small_train_data.csv", dtype=np.float_, delimiter=',')
-        label_arr = np.loadtxt("train_data/test_small_label.csv", dtype=np.float_, delimiter=',')
-    elif data_id == 1:
-        pose_arr = np.loadtxt("train_data/iou/all_data.csv", dtype=np.float_, delimiter=',')
-        label_arr = np.loadtxt("train_data/iou/all_label.csv", dtype=np.float_, delimiter=',')
+    if data_id == 1:
+        pose_arr = pd.read_csv("train_data/iou/all_data.csv", header=None, sep=',', encoding='utf-8')
+        label_arr = pd.read_csv("train_data/iou/all_label.csv", header=None, sep=',', encoding='utf-8')
     elif data_id == 2:
-        stream_pose = np.loadtxt("train_data/iou/stream_sub/data0.csv", dtype=np.float_, delimiter=',')
-        stream_label = np.loadtxt("train_data/iou/stream_sub/label0.csv", dtype=np.float_, delimiter=',')
-        for str_id in range(1, 10, 1):
-            pose_arr = np.loadtxt(
-                "train_data/iou/stream_sub/data" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
-            label_arr = np.loadtxt(
-                "train_data/iou/stream_sub/label_nearest" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
-            stream_pose = np.concatenate((stream_pose, pose_arr), axis=0)
-            stream_label = np.concatenate((stream_label, label_arr), axis=0)
-        return stream_pose, stream_label
-    elif data_id == 3:
-        data_path = "train_data/iou/data_by_video/single/"
-        label_path = "train_data/iou/data_by_video/single/"
-
-        single_pose = np.loadtxt(data_path + "data1.csv", dtype=np.float_, delimiter=',')
-        single_label = np.loadtxt(label_path + "label1.csv", dtype=np.float_, delimiter=',')
+        data_path = "../train/train_data/iou/data_by_video/single/"
+        label_path = "../train/train_data/iou/data_by_video/single/"
+        single_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8')
+        single_label = pd.read_csv(label_path + "label1.csv", header=None, sep=',', encoding='utf-8')
         video_length_list = [len(single_label)]
         for str_id in range(2, number_oftest):
             try:
-                pose_arr = np.loadtxt(data_path + "data" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
-                label_arr = np.loadtxt(label_path + "label" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
+                pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
+                                       encoding='utf-8')
+                label_arr = pd.read_csv(label_path + "label" + str(str_id) + ".csv", header=None, sep=',',
+                                        encoding='utf-8')
                 print("shape:", pose_arr.shape, label_arr.shape)
                 video_length_list.append(len(label_arr))
                 single_pose = np.concatenate((single_pose, pose_arr), axis=0)
@@ -44,15 +32,37 @@ def read_csv_train_label_data(data_id: int, output_type: int):
             else:
                 print("data has been load ", str_id)
         return single_pose, single_label, video_length_list
-    elif data_id == 4:
-        data_path = "train_data/iou/data_by_video/stream/"
-        label_path = "train_data/iou/data_by_video/stream/"
-        stream_pose = np.loadtxt(data_path + "data1.csv", dtype=np.float_, delimiter=',')
-        stream_label = np.loadtxt(label_path + "label1.csv", dtype=np.float_, delimiter=',')
+    elif data_id == 3:
+        data_path = "../train/train_data/iou/data_by_video/all_single/"
+        label_path = "../train/train_data/iou/data_by_video/all_single/"
+        stream_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8').values
+        stream_label = pd.read_csv(data_path + "label1.csv", header=None, sep=',', encoding='utf-8').values
         for str_id in range(2, number_oftest):
             try:
-                pose_arr = np.loadtxt(data_path + "data" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
-                label_arr = np.loadtxt(label_path + "label" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
+                pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
+                                       encoding='utf-8').values
+                label_arr = pd.read_csv(label_path + "label" + str(str_id) + ".csv", header=None, sep=',',
+                                        encoding='utf-8').values
+                print(str_id, "shape:", pose_arr.shape, label_arr.shape)
+                stream_pose = np.concatenate((stream_pose, pose_arr), axis=0)
+                stream_label = np.concatenate((stream_label, label_arr), axis=0)
+            except OSError:
+                print("data or label ", str_id, "is not exist")
+            else:
+                print("data has been load ", str_id)
+        stream_pose = stream_pose[:, 2:stream_pose.shape[1] - 1]  # 原始数据包含视频id，图片id，标签，需要去除
+        return stream_pose, stream_label
+    elif data_id == 4:
+        data_path = "../train/train_data/iou/data_by_video/stream/"
+        label_path = "../train/train_data/iou/data_by_video/stream/"
+        stream_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8')
+        stream_label = pd.read_csv(label_path + "label1.csv", header=None, sep=',', encoding='utf-8')
+        for str_id in range(2, number_oftest):
+            try:
+                pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
+                                       encoding='utf-8')
+                label_arr = pd.read_csv(label_path + "label" + str(str_id) + ".csv", header=None, sep=',',
+                                        encoding='utf-8')
                 print(str_id, "shape:", pose_arr.shape, label_arr.shape)
                 stream_pose = np.concatenate((stream_pose, pose_arr), axis=0)
                 stream_label = np.concatenate((stream_label, label_arr), axis=0)
@@ -61,28 +71,23 @@ def read_csv_train_label_data(data_id: int, output_type: int):
             else:
                 print("data has been load ", str_id)
         return stream_pose, stream_label
-    elif data_id == 5:
-        pose_arr = np.loadtxt("train_data/center/all_data.csv", dtype=np.float_, delimiter=',')
-        label_arr = np.loadtxt("train_data/center/all_label.csv", dtype=np.float_, delimiter=',')
     else:
         print("读取数据的参数错误，test=0:测试用小文件，1:iou 匹配数据，2:中心点匹配数据")
         return
     log.logger.info("csv data has been load")
-    num_start, num_stop = 80000, 100000  # 99623  # 总共有84141条数据,[start,stop),前开后闭区间
-    # return pose_arr[num_start:num_stop, output_range], label_arr[num_start:num_stop]  # 使用逗号进行裁剪维度分割
 
     if output_type == 0:
         # 单帧姿势
         train_data, label = normalize_face_point(pose_arr), label_arr
-        return train_data[num_start:num_stop], label[num_start:num_stop]
+        return train_data, label
     elif output_type == 1:
         # 视频流姿势
         train_data, label = [], []
         for i in range(0, 10, 1):
             st, end = 10000 * i, 10000 * i + 10000
             train_data, label = normalize_face_point_stream(pose_arr[st:end], label_arr[st:end])
-            np.savetxt("train_data/iou/data_by_video/stream/data" + str(i) + ".csv", train_data, delimiter=',')
-            np.savetxt("train_data/iou/data_by_video/stream/label" + str(i) + ".csv", label, delimiter=',')
+            # np.savetxt("train_data/iou/data_by_video/stream/data" + str(i) + ".csv", train_data, delimiter=',')
+            # np.savetxt("train_data/iou/data_by_video/stream/label" + str(i) + ".csv", label, delimiter=',')
         return train_data, label
     else:
         return "未选定输出为视频流姿势或单帧姿势"
@@ -154,4 +159,11 @@ def normalize_face_point_stream(pose_array: np.array, labels: np.array):
 
 
 if __name__ == "__main__":
-    pass
+    st = time.time()
+    read_csv_train_label_data(data_id=4, output_type=1)
+    t1 = time.time()
+    print("------------------------------------")
+    print("pandas time: ", t1 - st)
+    read_csv_train_label_data(data_id=5, output_type=1)
+    t2 = time.time()
+    print("np time: ", t2 - t1)

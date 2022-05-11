@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from train.get_data import normalize_face_point
+from toolkit.read_data import normalize_face_point
 
 
 class MyTestCase(unittest.TestCase):

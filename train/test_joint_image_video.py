@@ -1,9 +1,12 @@
-from train.get_data import load_model
-import train.read_data as read_data
 import time
-from log_config import log
+
 import numpy as np
+
 import calculate.calculate as cal
+import toolkit.read_data as read_data
+from log_config import log
+from toolkit.get_data import load_model
+
 
 def read_data_to_test():
     pass
@@ -12,7 +15,7 @@ def read_data_to_test():
 if __name__ == "__main__":
     start_at = time.time()
     log.logger.info("联合测试开始-------------------------------------------")
-    raw_image_data, raw_image_label, video_len_list = read_data.read_csv_train_label_data(data_id=3, output_type=1)
+    raw_image_data, raw_image_label, video_len_list = read_data.read_csv_train_label_data(data_id=2, output_type=1)
     raw_video_data, raw_video_label = read_data.read_csv_train_label_data(data_id=4, output_type=1)
     get_data_at = time.time()
     log.logger.info("测试SGD分类器, data大小(%d,%d),%d" %

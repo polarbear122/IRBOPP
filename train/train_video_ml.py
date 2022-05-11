@@ -1,6 +1,7 @@
 # 输入视频流，输出label （0，1）
 # 训练图像级别的pose svm分类器,训练时间与数据量的平方成正比，数据量超过一万时很慢。
 # https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDClassifier.html#sklearn.linear_model.SGDClassifier
+import os
 import pickle
 import time
 
@@ -13,11 +14,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 import calculate.calculate as cal
-import train.data_resample as data_resample
-
+import toolkit.data_resample as data_resample
 from log_config import log
-from train import get_data, read_data
-from train.data_resample import sample_pipeline
+from toolkit import get_data, read_data
 
 
 def sgd_trainer(all_data, all_labels):
@@ -96,7 +95,7 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 if __name__ == "__main__":
     start_at = time.time()
     train_dataset, labels = read_data.read_csv_train_label_data(data_id=4, output_type=1)
-    log.logger.info("video训练开始-------------------------------------------")
+    log.logger.info("%s --训练开始--------------" % (os.path.basename(__file__).split(".")[0]))
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC"]
     train_model = {"SGD"      : sgd_trainer,

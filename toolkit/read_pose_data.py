@@ -103,7 +103,7 @@ def write_pose_cross_data(j, bbox_path, image_path, output_data_path, tag, vis=F
             x, y, confi, pbox = read_pose_box(j_image)
 
             if vis:
-                # Show original image at 19020 * 1080
+                # Show original image_patch at 1920 * 1080
                 img = mpimg.imread(image_path + '/' + image_ID)
                 fig = plt.figure(figsize=(19.2, 10.8), dpi=100)
                 ax = fig.gca()
@@ -157,7 +157,7 @@ def write_pose_cross_data(j, bbox_path, image_path, output_data_path, tag, vis=F
 def main():
     json_path = "E:/CodeResp/pycode/DataSet/pose_result/alphapose-results-0002.json"
     # bbox_path = '../../Dataset/Data_by_Matlab/cross/bbox'
-    # image_path = '../../Dataset/Data_by_Matlab/cross/image'
+    # image_path = '../../Dataset/Data_by_Matlab/cross/image_patch'
     # output_data_path = '../../Dataset/Data_by_Matlab/cross_pose_data'
     #
     # j = readJson(json_path)
