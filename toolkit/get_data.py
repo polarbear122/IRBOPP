@@ -5,6 +5,7 @@ import numpy as np
 from toolkit.read_pose_data import read_json
 from toolkit.xml_read import xml_read, str_to_int
 from toolkit.read_data import normalize_face_point_stream
+from toolkit.plot_data import plot_pose_box_look
 
 
 def get_key_points(keypoints: list):
@@ -19,45 +20,6 @@ def get_key_points(keypoints: list):
         key_points.append(keypoints[i * 3 + 1])
         key_points.append(keypoints[i * 3 + 2])
     return key_points
-
-
-# 画出（左上角，宽，高）格式的box
-def plot_pose_box_look_b(pose_box, annotation, is_look, video_id):
-    output_file = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
-    img = cv2.imread(output_file + annotation["@frame"] + ".jpg")
-    a, b, c, d = int(pose_box[0]), int(pose_box[1]), int(pose_box[2]), int(pose_box[3])
-    cv2.line(img, (a, b), (a + c, b), (0, 0, 255), thickness=2)
-    cv2.line(img, (a, b), (a, b + d), (0, 0, 255), thickness=2)
-    cv2.line(img, (a + c, b), (a + c, b + d), (0, 0, 255), thickness=2)
-    cv2.line(img, (a, b + d), (a + c, b + d), (0, 0, 255), thickness=2)
-    cv2.putText(img, is_look, (a, b), cv2.FONT_HERSHEY_SIMPLEX, 1, (55, 255, 155), 2)
-    img = cv2.resize(img, (1920 // 2, 1080 // 2))
-    cv2.imshow("./pose box looking", img)
-    cv2.waitKey(1)
-
-
-# 画出（左上角，右下角）格式的box
-def plot_pose_box_look(pose_box, annotation, is_look, video_id, points):
-    output_file = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
-    img = cv2.imread(output_file + annotation["@frame"] + ".jpg")
-    xtl, ytl, xbr, ybr = int(pose_box[0]), int(pose_box[1]), int(pose_box[2]), int(pose_box[3])
-    cv2.line(img, (xbr, ytl), (xtl, ytl), (0, 0, 255), thickness=2)
-    cv2.line(img, (xbr, ytl), (xbr, ybr), (0, 0, 255), thickness=2)
-    cv2.line(img, (xbr, ybr), (xtl, ybr), (0, 0, 255), thickness=2)
-    cv2.line(img, (xtl, ybr), (xtl, ytl), (0, 0, 255), thickness=2)
-    x_mid, y_mid = (xbr + xtl) // 2, (ybr + ytl) // 2
-    cv2.putText(img, is_look, (x_mid, y_mid), cv2.FONT_HERSHEY_SIMPLEX, 1, (55, 255, 155), 2)
-    # cv2.putText(img, str(pose_box[0]), (x_mid, y_mid + 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (55, 255, 155), 2)
-
-    for i in range(26):
-        point_colour = (0, 0, 255)
-        if points[i + 2] > 0.7:
-            point_colour = (255, 255, 0)
-        cv2.circle(img, (round(points[i * 3]), round(points[i * 3 + 1])), 2, point_colour, 2)
-    # img = cv2.resize(img, (1920 // 2, 1080 // 2))
-    cv2.imshow("./pose box looking", img)
-    cv2.waitKey(1)
-    return img
 
 
 def box_iou(box1, box2):
@@ -104,7 +66,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
 
             max_iou = 0.6
             pose_box = []  # alpha pose的box位置,json文件中为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
-            x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（中心点，宽高）格式
+            x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
             img_frame_id = 0
             plot_max_box = []
             for pose in alpha_pose:
@@ -113,12 +75,12 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                 if pose["image_id"] == annotation["@frame"] + ".jpg":
                     pose_box = [pose["box"][0], pose["box"][1], pose["box"][0] + pose["box"][2],
                                 pose["box"][1] + pose["box"][3]]
-                    mid_width_height_box = pose["box"]
+                    tl_width_height_box = pose["box"]  # 获取注释中的box，(左上角点，宽高)格式
                     true_box = [xtl, ytl, xbr, ybr]
                     iou_val = box_iou(pose_box, true_box)
                     if iou_val > max_iou:
                         x_keypoints_proposal = get_key_points(pose["keypoints"])
-                        max_pose_box = mid_width_height_box
+                        max_pose_box = tl_width_height_box
                         plot_max_box = pose_box
                         img_frame_id = int(annotation["@frame"])
                         max_iou = iou_val
@@ -131,7 +93,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                     label = 1
                 y.append(label)
                 x.append([int_video_id] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
-                need_plot = False
+                need_plot = True
                 if need_plot and pose_box and max_iou > 0.6:
                     plot_img = plot_pose_box_look(plot_max_box, annotation, is_look, video_id, x_keypoints_proposal)
                     # video_pose_box.write(plot_img)
@@ -149,8 +111,8 @@ def get_stream_data():
             pose_arr = np.loadtxt(data_path + "data" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
             label_arr = np.loadtxt(label_path + "label" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
             pose, label = normalize_face_point_stream(pose_arr, label_arr)
-            np.savetxt("train_data/iou/data_by_video/stream/data" + str(str_id) + ".csv", pose, delimiter=',')
-            np.savetxt("train_data/iou/data_by_video/stream/label" + str(str_id) + ".csv", label, delimiter=',')
+            # np.savetxt("train_data/iou/data_by_video/stream/data" + str(str_id) + ".csv", pose, delimiter=',')
+            # np.savetxt("train_data/iou/data_by_video/stream/label" + str(str_id) + ".csv", label, delimiter=',')
         except OSError:
             print("data or label ", str_id, "is not exist")
         else:
@@ -168,8 +130,8 @@ def get_init_data():
         x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id, i)
         if x.shape[1] == train_data_shape:
             x_array, y_array = np.asarray(x), np.asarray(y)
-            np.savetxt("train_data/iou/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
-            np.savetxt("train_data/iou/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
+            # np.savetxt("train_data/iou/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
+            # np.savetxt("train_data/iou/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
             train_dataset = np.concatenate((train_dataset, x))
             labels = np.concatenate((labels, y))
     # print("all data saved, shape:", train_dataset.shape, labels.shape, "true shape:", train_data_shape)
@@ -197,3 +159,4 @@ def load_model(file_path):
 if __name__ == "__main__":
     get_init_data()
     exit(0)
+    # 0,1,2,3
