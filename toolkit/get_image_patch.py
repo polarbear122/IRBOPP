@@ -34,7 +34,55 @@ def int_to_even(number: int):
     return int(number // 2 * 2)
 
 
-def pose_img_patch(each_video_all_pose):
+def face_image_patch(each_video_all_pose):
+    image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
+    img_r_width, img_r_height = 80, 200  # 输出脸部图像的大小，宽和高
+    each_video_pose = each_video_all_pose[0]
+    img_id_start = 0
+    for pose in each_video_pose:
+        v_id, img_id, label = int(pose[0]), int(pose[1]), int(pose[84])
+        img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
+        raw_image = cv2.imread(img_file_path, 1)
+        print("raw image shape:", raw_image.shape)
+        xtl, ytl, width, height = round(pose[80]), round(pose[81]), round(pose[82]), round(pose[83])
+        xbr, ybr = xtl + width, ytl + height
+        print("xtl, ytl, xbr, ybr", xtl, ytl, xbr, ybr)
+
+        img_patch = raw_image[ytl:ybr, xtl:xbr, :]
+        print("img cropped patch shape:", img_patch.shape)
+        img_height, img_width, img_shape = img_patch.shape
+        os_dir = "../train/halpe26_data/data_by_video/image_face_patch/video_" + str(v_id).zfill(4)
+        if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
+            os.makedirs(os_dir)
+        else:
+            print("保存为图像patch的文件夹已存在，注意不要覆盖图像")
+            break
+        save_path = os_dir + "/" + str(img_id_start) + ".jpg"
+        img_id_start += 1
+        print(save_path)
+        if img_width / img_height < img_r_width / img_r_height:
+            # 高度与结果一致
+            fx = img_r_height / img_height
+            img_patch_resize = cv2.resize(img_patch, dsize=(int_to_even(img_width * fx), img_r_height))
+            patch_resize_height, patch_resize_width = img_patch_resize.shape[0], img_patch_resize.shape[1]
+            print("img_patch_resize.shape:", img_patch_resize.shape)
+            img_padding = np.zeros((img_r_height, (img_r_width - patch_resize_width) // 2, 3), np.uint8)
+            print("img_padding.shape:", img_padding.shape)
+            img_patch_concat = np.concatenate((img_padding, img_patch_resize, img_padding), axis=1)
+        else:
+            # 宽度与结果一致
+            fy = img_r_width / img_width
+            img_patch_resize = cv2.resize(img_patch, dsize=(img_r_width, int_to_even(img_height * fy)))
+            patch_resize_height, patch_resize_width = img_patch_resize.shape[0], img_patch_resize.shape[1]
+            print("img_patch_resize.shape:", img_patch_resize.shape)
+            img_padding = np.zeros(((img_r_height - patch_resize_height) // 2, img_r_width, 3), np.uint8)
+            print("img_padding shape: ", img_padding.shape)
+            img_patch_concat = np.concatenate((img_padding, img_patch_resize, img_padding), axis=0)
+        print("img_patch_concat shape", img_patch_concat.shape)
+        cv2.imwrite(save_path, img_patch_concat)
+
+
+def total_body_img_patch(each_video_all_pose):
     image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
     img_r_width, img_r_height = 80, 200  # 输出结果图像的大小，宽和高
     each_video_pose = each_video_all_pose[0]
@@ -51,9 +99,12 @@ def pose_img_patch(each_video_all_pose):
         img_patch = raw_image[ytl:ybr, xtl:xbr, :]
         print("img cropped patch shape:", img_patch.shape)
         img_height, img_width, img_shape = img_patch.shape
-        os_dir = "../train/train_data/iou/data_by_video/image_patch/video_" + str(v_id).zfill(4)
+        os_dir = "../train/halpe26_data/data_by_video/image_patch/video_" + str(v_id).zfill(4)
         if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
             os.makedirs(os_dir)
+        else:
+            print("保存为图像patch的文件夹已存在，注意不要覆盖图像")
+            break
         save_path = os_dir + "/" + str(img_id_start) + ".jpg"
         img_id_start += 1
         print(save_path)
@@ -81,10 +132,10 @@ def pose_img_patch(each_video_all_pose):
 
 if __name__ == "__main__":
     number_of_test = 347  # 测试的视频量
-    for video_read_id in range(308, number_of_test):
+    for video_read_id in range(0, number_of_test):
         try:
             all_pose = np.array(read_pose_annotation(video_read_id))
-            pose_img_patch(all_pose)
+            total_body_img_patch(all_pose)
         except OSError:
             print("data ", video_read_id, "is not exist")
         else:

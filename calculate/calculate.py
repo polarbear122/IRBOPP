@@ -39,19 +39,6 @@ def calculate_FN(y_true, y_predict):
     return fn
 
 
-# 准确率 Accuracy
-# 准确使人们对模型的运行方式有了整体认识。 但是，如果使用不正确，它很容易高估这些数字。
-# 例如-如果类标签的分布偏斜，则仅预测多数类会给您带来高分（高估性能），而对于平衡类而言，准确性更有意义。
-def calculate_accuracy(y_true, y_predict):
-    tp = calculate_TP(y_true, y_predict)
-    tn = calculate_TN(y_true, y_predict)
-    fp = calculate_FP(y_true, y_predict)
-    fn = calculate_FN(y_true, y_predict)
-    if (tp + tn + fp + fn) == 0:
-        return 0
-    return (tp + tn) / (tp + tn + fp + fn)
-
-
 # 精度 Precision
 # 精度度量有助于我们理解识别阳性样本的正确性%。例如，我们的模型假设有80次是正的，我们精确地计算这80次中有多少次模型是正确的。
 def calculate_precision(y_true, y_predict):
@@ -120,9 +107,24 @@ def brier_score(y_true, y_predict):
     return s * (1 / len(y_true))
 
 
+# 准确率 Accuracy
+# 准确使人们对模型的运行方式有了整体认识。 但是，如果使用不正确，它很容易高估这些数字。
+# 例如-如果类标签的分布偏斜，则仅预测多数类会给您带来高分（高估性能），而对于平衡类而言，准确性更有意义。
+def calculate_accuracy(y_true, y_predict):
+    tp = calculate_TP(y_true, y_predict)
+    tn = calculate_TN(y_true, y_predict)
+    fp = calculate_FP(y_true, y_predict)
+    fn = calculate_FN(y_true, y_predict)
+    if (tp + tn + fp + fn) == 0:
+        return 0
+    accuracy = (tp + tn) / (tp + tn + fp + fn)
+    print("当前方法的检测准确率为%0.3f%%" % (accuracy * 100))
+    return accuracy
+
+
 def calculate_all(y_true, y_predict):
-    calculate_name = [calculate_TP, calculate_TN, calculate_FP, calculate_FN, calculate_accuracy,
-                      calculate_precision, calculate_recall, calculate_F1, roc_auc, brier_score]
+    calculate_name = [calculate_TP, calculate_TN, calculate_FP, calculate_FN,
+                      calculate_precision, calculate_recall, calculate_F1, roc_auc, brier_score, calculate_accuracy]
     for name in calculate_name:
         logger.info("数值:%f, 指标:%s" % (name(y_true, y_predict), name.__name__))
 

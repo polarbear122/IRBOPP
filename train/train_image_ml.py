@@ -73,9 +73,9 @@ def forest_trainer(all_data, all_labels):
 
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
-    train_data_score = clf.score(x_train, y_train) * 100
-    test_data_score = clf.score(x_test, y_test) * 100
-    log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
+    # train_data_score = clf.score(x_train, y_train) * 100 # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
+    # test_data_score = clf.score(x_test, y_test) * 100
+    # log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
     y_pred = clf.predict(x_test)
     y_p = np.zeros(len(y_pred))
     for i in range(len(y_pred)):
@@ -84,27 +84,6 @@ def forest_trainer(all_data, all_labels):
         else:
             y_p[i] = 1
     cal.calculate_all(y_test, y_p)  # 评估计算结果
-    s = pickle.dumps(clf)
-    return s
-
-
-def grid_search_cv(all_data, all_labels):
-    x_train, x_test, y_train, y_test = \
-        train_test_split(all_data, all_labels, random_state=1, train_size=0.05)
-    # 随机森林去进行预测
-    rf = RandomForestClassifier()
-    param = {"n_estimators"     : [120, 200, 300, 500, 800, 1200], "max_depth": [5, 8, 15, 25, 30],
-             "min_samples_split": [15, 20, 25, 30, 35]}
-    # 超参数调优
-    clf = GridSearchCV(rf, param_grid=param, cv=2, n_jobs=-1)
-    print("超参数调优完毕")
-    clf.fit(x_train, y_train.ravel())
-    print("随机森林预测的准确率为：", clf.score(x_test, y_test))
-    train_data_score = clf.score(x_train, y_train) * 100
-    test_data_score = clf.score(x_test, y_test) * 100
-    log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
-    y_pred = clf.predict(x_test)
-    cal.calculate_all(y_test, y_pred)  # 评估计算结果
     s = pickle.dumps(clf)
     return s
 
@@ -175,16 +154,15 @@ if __name__ == "__main__":
     start_at = time.time()
     train_dataset, labels, _ = read_data.read_csv_train_label_data(data_id=2, output_type=1)
     get_data_at = time.time()
-    name_list = ["SGD", "SVM", "Forest", "LinearSVC", "LogisticRegression", "GridSearchCV", "GradientBooting"]
+    name_list = ["SGD", "SVM", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
     train_model = {"SGD"               : sgd_trainer,
                    "SVM"               : svm_trainer,
                    "Forest"            : forest_trainer,
                    "LinearSVC"         : linear_svc_trainer,
                    "LogisticRegression": logistic_regression,
-                   "GridSearchCV"      : grid_search_cv,
                    "GradientBooting"   : gradient_booting
                    }
-    trainer = name_list[6]  # 选择训练器
+    trainer = name_list[5]  # 选择训练器
     log.logger.info("%s --单帧pose训练开始--------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info(
         "开始训练%s分类器:数据规模(%d,%d),%d" % (trainer, train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))

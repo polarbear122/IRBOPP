@@ -28,7 +28,8 @@ def read_csv_train_label_data(data_id: int, output_type: int):
                 print("data or label ", str_id, "is not exist")
             else:
                 print("data has been load ", str_id)
-        return single_pose, single_label, video_length_list
+        norm_single_pose = normalize_all_point(single_pose)
+        return norm_single_pose, single_label, video_length_list
     elif data_id == 3:
         data_path = "halpe26_data/data_by_video/all_single/"
         label_path = "halpe26_data/data_by_video/all_single/"
@@ -93,23 +94,37 @@ def read_csv_train_label_data(data_id: int, output_type: int):
 # 正则化脸部特征点
 # 使用0位置（鼻子）作为零点，所有特征点减去该点坐标，分别除以人的box宽和17，18特征点（额头、下巴）之间高度
 # [0, 1, 2, 3, 4, 17, 18] 脸部的特征点范围，共7个特征点
-def normalize_face_point(pose_array: np.array):
+def normalize_face_point(__pose_arr: np.array):
     face_range = [0, 1, 2, 3, 4, 17, 18]
-    normalize_array = np.zeros((len(pose_array), 1))
+    normalize_array = np.zeros((len(__pose_arr), 1))
 
-    box_width = np.max(pose_array, axis=1)  # 行人的宽度，shape=(number,1)
-    face_height = pose_array[:, 18 * 3 + 1] - pose_array[:, 17 * 3 + 1]  # 脸部的高度
-    face_center_x, face_center_y = pose_array[:, 1], pose_array[:, 2]  # 脸部中心点（鼻子）的坐标，列向量
+    box_width = np.max(__pose_arr, axis=1)  # 行人的宽度，shape=(number,1)
+    face_height = __pose_arr[:, 18 * 3 + 1] - __pose_arr[:, 17 * 3 + 1]  # 脸部的高度
+    face_center_x, face_center_y = __pose_arr[:, 1], __pose_arr[:, 2]  # 脸部中心点（鼻子）的坐标，列向量
     for position in face_range:
-        sub_x, sub_y = pose_array[:, position] - face_center_x, pose_array[:, position + 1] - face_center_y
+        sub_x, sub_y = __pose_arr[:, position] - face_center_x, __pose_arr[:, position + 1] - face_center_y
         # 如果被除数为0，则将结果置为1
         norm_x = np.divide(sub_x, box_width, out=np.ones_like(sub_x), where=box_width != 0).reshape(-1, 1)
         norm_y = np.divide(sub_y, face_height, out=np.ones_like(sub_y), where=face_height != 0).reshape(-1, 1)
 
         normalize_array = np.concatenate((normalize_array, norm_x), axis=1)  # 特征点的x轴值
         normalize_array = np.concatenate((normalize_array, norm_y), axis=1)  # 特征点的y轴值
-        normalize_array = np.concatenate((normalize_array, pose_array[:, position + 2].reshape(-1, 1)), axis=1)  # 可见性
+        normalize_array = np.concatenate((normalize_array, __pose_arr[:, position + 2].reshape(-1, 1)), axis=1)  # 可见性
     return normalize_array[:, 1:]
+
+
+# 正则化所有特征点，以0位置（鼻子）作为零点，所有特征点减去该点坐标
+def normalize_all_point(__pose_arr: np.array):
+    for __j in [1, 3, 5, 17]:
+        norm_x = __pose_arr[:, __j * 3] - __pose_arr[:, (__j + 1) * 3]
+        norm_y = __pose_arr[:, __j * 3 + 1] - __pose_arr[:, (__j + 1) * 3 + 1]
+        __pose_arr = np.concatenate((__pose_arr, norm_x.reshape(-1, 1)), axis=1)  # 特征点的y轴值
+        __pose_arr = np.concatenate((__pose_arr, norm_y.reshape(-1, 1)), axis=1)
+    for __i in range(1, 26):
+        __pose_arr[:, __i * 3] -= __pose_arr[:, 0]
+        __pose_arr[:, __i * 3 + 1] -= __pose_arr[:, 1]
+    # __pose_array = __pose_array[:, [0, 1, 2, 3, 4, 5, 6, 17, 18, 78, 79, 80, 81]]
+    return __pose_arr
 
 
 # 一秒三十帧，每次输出f_p_stream帧为一个视频流，在每行数据后面直接append，标签采用“或”方式相加
