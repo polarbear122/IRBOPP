@@ -8,12 +8,9 @@ import time
 def read_csv_train_label_data(data_id: int, output_type: int):
     number_oftest = 347
     # 从csv文件中读取
-    if data_id == 1:
-        pose_arr = pd.read_csv("train_data/iou/all_data.csv", header=None, sep=',', encoding='utf-8')
-        label_arr = pd.read_csv("train_data/iou/all_label.csv", header=None, sep=',', encoding='utf-8')
-    elif data_id == 2:
-        data_path = "../train/train_data/iou/data_by_video/single/"
-        label_path = "../train/train_data/iou/data_by_video/single/"
+    if data_id == 2:
+        data_path = "halpe26_data/data_by_video/single/"
+        label_path = "halpe26_data/data_by_video/single/"
         single_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8')
         single_label = pd.read_csv(label_path + "label1.csv", header=None, sep=',', encoding='utf-8')
         video_length_list = [len(single_label)]
@@ -33,8 +30,8 @@ def read_csv_train_label_data(data_id: int, output_type: int):
                 print("data has been load ", str_id)
         return single_pose, single_label, video_length_list
     elif data_id == 3:
-        data_path = "../train/train_data/iou/data_by_video/all_single/"
-        label_path = "../train/train_data/iou/data_by_video/all_single/"
+        data_path = "halpe26_data/data_by_video/all_single/"
+        label_path = "halpe26_data/data_by_video/all_single/"
         stream_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8').values
         stream_label = pd.read_csv(data_path + "label1.csv", header=None, sep=',', encoding='utf-8').values
         for str_id in range(2, number_oftest):
@@ -53,8 +50,8 @@ def read_csv_train_label_data(data_id: int, output_type: int):
         stream_pose = stream_pose[:, 2:stream_pose.shape[1] - 1]  # 原始数据包含视频id，图片id，标签，需要去除
         return stream_pose, stream_label
     elif data_id == 4:
-        data_path = "../train/train_data/iou/data_by_video/stream/"
-        label_path = "../train/train_data/iou/data_by_video/stream/"
+        data_path = "halpe26_data/data_by_video/stream/"
+        label_path = "halpe26_data/data_by_video/stream/"
         stream_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8')
         stream_label = pd.read_csv(label_path + "label1.csv", header=None, sep=',', encoding='utf-8')
         for str_id in range(2, number_oftest):

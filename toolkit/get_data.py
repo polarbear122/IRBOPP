@@ -10,12 +10,13 @@ from toolkit.plot_data import plot_pose_box_look
 
 def get_key_points(keypoints: list):
     # key points [0, 1, 2, 3, 4, 17, 18]
-    if len(keypoints) != 78:
+    if len(keypoints) != 26 * 3 and len(keypoints) != 17 * 3:
+        print("the len of keypoints is not 26*3 or 17*3")
         return []
     key_points = []
     # for i in [0, 1, 2, 3, 4, 17, 18]:
     #     key_points.append(keypoints[i * 3 + 2])
-    for i in range(26):
+    for i in range(len(keypoints) // 3):
         key_points.append(keypoints[i * 3 + 0])
         key_points.append(keypoints[i * 3 + 1])
         key_points.append(keypoints[i * 3 + 2])
@@ -93,7 +94,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                     label = 1
                 y.append(label)
                 x.append([int_video_id] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
-                need_plot = True
+                need_plot = False
                 if need_plot and pose_box and max_iou > 0.6:
                     plot_img = plot_pose_box_look(plot_max_box, annotation, is_look, video_id, x_keypoints_proposal)
                     # video_pose_box.write(plot_img)
@@ -120,26 +121,25 @@ def get_stream_data():
 
 
 def get_init_data():
-    train_data_shape = 85  # 训练的数据的列的大小为7，总训练的数据格式为(number_of_data,train_data_shape)
-    train_dataset, labels = np.zeros((1, train_data_shape), float), np.zeros((1, 1), float)
+    useful_video_number = 0
     for i in range(1, 347):
         video_id = "video_" + str(i).zfill(4)
         xml_anno_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
         # output_data_path = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
-        alpha_pose_path = "E:/CodeResp/pycode/DataSet/pose_result/" + video_id + "/alphapose-results.json"
+        # alpha_pose_path = "E:/CodeResp/pycode/DataSet/pose_result/" + video_id + "/alphapose-results.json"
+        alpha_pose_path = "E:/CodeResp/pycode/DataSet/coco17_pose_result/" + video_id + "/alphapose-results.json"
         x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id, i)
-        if x.shape[1] == train_data_shape:
+        if x.shape[1] > 1:
+            useful_video_number += 1
             x_array, y_array = np.asarray(x), np.asarray(y)
-            # np.savetxt("train_data/iou/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
-            # np.savetxt("train_data/iou/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
-            train_dataset = np.concatenate((train_dataset, x))
-            labels = np.concatenate((labels, y))
-    # print("all data saved, shape:", train_dataset.shape, labels.shape, "true shape:", train_data_shape)
+            np.savetxt("../train/coco17_data/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
+            np.savetxt("../train/coco17_data/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
+
     # train_dataset = np.asarray(train_dataset)
     # labels = np.asarray(labels)
     # np.savetxt("train_data/test_all_train_data.csv", train_dataset, delimiter=',')
     # np.savetxt("train_data/test_all_label.csv", labels, delimiter=',')
-    return train_dataset, labels
+    return useful_video_number
 
 
 def save_model(file_path, file_name, model):
@@ -157,6 +157,6 @@ def load_model(file_path):
 
 
 if __name__ == "__main__":
-    get_init_data()
+    print("number of useful data", get_init_data())
     exit(0)
     # 0,1,2,3

@@ -59,6 +59,24 @@ def draw_pose(frame, bbox, human_keypoints):
                   (77, 191, 255), (204, 77, 255), (77, 222, 255), (255, 156, 127),
                   (0, 127, 255), (255, 127, 77), (0, 77, 255), (255, 77, 36),
                   (0, 77, 255), (0, 77, 255), (0, 77, 255), (0, 77, 255), (255, 156, 127), (255, 156, 127)]
+
+    if len(human_keypoints) == 17 * 3:
+        l_pair = [
+            (0, 1), (0, 2), (1, 3), (2, 4),  # Head
+            (5, 6), (5, 7), (7, 9), (6, 8), (8, 10),
+            (17, 11), (17, 12),  # Body
+            (11, 13), (12, 14), (13, 15), (14, 16)
+        ]
+        p_color = [(0, 255, 255), (0, 191, 255), (0, 255, 102), (0, 77, 255), (0, 255, 0),
+                   # Nose, LEye, REye, LEar, REar
+                   (77, 255, 255), (77, 255, 204), (77, 204, 255), (191, 255, 77), (77, 191, 255), (191, 255, 77),
+                   # LShoulder, RShoulder, LElbow, RElbow, LWrist, RWrist
+                   (204, 77, 255), (77, 255, 204), (191, 77, 255), (77, 255, 191), (127, 77, 255), (77, 255, 127),
+                   (0, 255, 255)]  # LHip, RHip, LKnee, Rknee, LAnkle, RAnkle, Neck
+        line_color = [(0, 215, 255), (0, 255, 204), (0, 134, 255), (0, 255, 50),
+                      (77, 255, 222), (77, 196, 255), (77, 135, 255), (191, 255, 77), (77, 255, 77),
+                      (77, 222, 255), (255, 156, 127),
+                      (0, 127, 255), (255, 127, 77), (0, 77, 255), (255, 77, 36)]
     img = frame.copy()
     part_line = {}
     kp_preds = np.array(human_keypoints).reshape(-1, 3)
@@ -122,7 +140,7 @@ def plot_test_result():
                 wait_time = 10
                 # 当预测值与真值不同时，画出异常值
                 if is_look_t != is_look_p:
-                    cv2.putText(img, is_look_p, (xtl, ytl-20), cv2.FONT_HERSHEY_SIMPLEX, 1, YELLOW, 2)
+                    cv2.putText(img, is_look_p, (xtl, ytl - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, YELLOW, 2)
                     wait_time = 100
                 img = cv2.resize(img, (1920 // 2, 1080 // 2))
                 cv2.imshow("pose box looking", img)

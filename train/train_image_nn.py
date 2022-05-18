@@ -3,7 +3,7 @@ import torch
 import torch.nn.functional as nn_func
 
 import calculate.calculate as cal
-from toolkit import get_data
+from toolkit import read_data
 
 
 class Net(torch.nn.Module):
@@ -68,7 +68,7 @@ def train_cnn_pose_trainer(x, y):
 
 
 if __name__ == "__main__":
-    train_dataset, labels = get_data.read_csv_train_label_data(data_id=2)  # 输出为numpy矩阵,shape(num,21),(num,)
+    train_dataset, labels = read_data.read_csv_train_label_data(data_id=2, output_type=1)
     train_dataset_torch = torch.from_numpy(train_dataset).type(torch.FloatTensor)
     labels_torch = torch.from_numpy(labels).type(
         torch.LongTensor)  # tensor和numpy对象共享内存，转换很快，几乎不消耗资源; 但如果其中一个变了，另外一个也随之改变，
