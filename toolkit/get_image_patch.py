@@ -34,6 +34,7 @@ def int_to_even(number: int):
     return int(number // 2 * 2)
 
 
+# 输出脸部图像的大小，宽和高
 def face_image_patch(each_video_all_pose):
     image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
     img_r_width, img_r_height = 80, 200  # 输出脸部图像的大小，宽和高
@@ -82,6 +83,7 @@ def face_image_patch(each_video_all_pose):
         cv2.imwrite(save_path, img_patch_concat)
 
 
+# 整个的人体图像patch
 def total_body_img_patch(each_video_all_pose):
     image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
     img_r_width, img_r_height = 80, 200  # 输出结果图像的大小，宽和高

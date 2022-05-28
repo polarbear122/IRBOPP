@@ -162,13 +162,13 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting"   : gradient_booting
                    }
-    trainer = name_list[5]  # 选择训练器
+    trainer = name_list[0]  # 选择训练器
     log.logger.info("%s --单帧pose训练开始--------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info(
         "开始训练%s分类器:数据规模(%d,%d),%d" % (trainer, train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
 
     model = train_model.get(trainer, default)(train_dataset, labels)  # 执行对应的函数，如果没有就执行默认的函数
-    get_data.save_model("trained_model/", trainer + "_image_unsampled_ml.model", model)
+    get_data.save_model("trained_model/", trainer + "_image_ml.model", model)
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序
