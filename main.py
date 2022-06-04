@@ -3,6 +3,7 @@ import torch
 import cv2
 import numpy as np
 import train.test_joint_image_video as jo
+import pandas as pd
 
 
 def test_cuda():
@@ -52,5 +53,19 @@ def test_python_input():
     print(init_list)
 
 
+def test_file_read():
+    data_path = "halpe26_data/data_by_video/single/"
+
+    for str_id in range(2, 10):
+        try:
+            f = open(data_path + "data" + str(str_id) + ".csv", encoding='utf-8')
+            pose_arr = pd.read_csv(f)
+            print("shape:", pose_arr.shape)
+        except OSError:
+            print("data or label ", str_id, "is not exist")
+        else:
+            print("data has been load ", str_id)
+
+
 if __name__ == "__main__":
-    test_python_input()
+    test_file_read()

@@ -66,7 +66,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
             # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
 
             max_iou = 0.6
-            pose_box = []  # alpha pose的box位置,json文件中为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
+            pose_box = []  # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
             img_frame_id = 0
             plot_max_box = []
@@ -76,7 +76,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                 if pose["image_id"] == annotation["@frame"] + ".jpg":
                     pose_box = [pose["box"][0], pose["box"][1], pose["box"][0] + pose["box"][2],
                                 pose["box"][1] + pose["box"][3]]
-                    tl_width_height_box = pose["box"]  # 获取注释中的box，(左上角点，宽高)格式
+                    tl_width_height_box = pose["box"]  # 获取alpha pose中的box，(左上角点，宽高)格式
                     true_box = [xtl, ytl, xbr, ybr]
                     iou_val = box_iou(pose_box, true_box)
                     if iou_val > max_iou:

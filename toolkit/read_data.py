@@ -113,7 +113,7 @@ def normalize_face_point(__pose_arr: np.array):
     return normalize_array[:, 1:]
 
 
-# 正则化所有特征点，以0位置（鼻子）作为零点，所有特征点减去该点坐标
+# 正则化所有特征点，以0位置（鼻子）作为零点，所有脸部特征点减去该点坐标
 def normalize_all_point(__pose_arr: np.array):
     for __j in [1, 3, 5, 17]:
         norm_x = __pose_arr[:, __j * 3] - __pose_arr[:, (__j + 1) * 3]

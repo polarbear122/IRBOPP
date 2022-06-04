@@ -8,7 +8,7 @@ import os
 
 
 def read_pose_annotation(__video_id: int):
-    data_path = "../train/train_data/iou/data_by_video/all_single/"
+    data_path = "../train/halpe26_data/data_by_video/all_single/"
     pose_arr = pd.read_csv(data_path + "data" + str(__video_id) + ".csv", header=None, sep=',',
                            encoding='utf-8').values
     print(__video_id, "shape:", pose_arr.shape)
@@ -83,6 +83,30 @@ def face_image_patch(each_video_all_pose):
         cv2.imwrite(save_path, img_patch_concat)
 
 
+# 整个的人体图像patch,未经过resize，保留原始大小
+def total_body_img_patch_init(each_video_all_pose):
+    image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
+    each_video_pose = each_video_all_pose[0]
+    img_id_start = 0
+    for pose in each_video_pose:
+        v_id, img_id, label = int(pose[0]), int(pose[1]), int(pose[84])
+        img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
+        raw_image = cv2.imread(img_file_path, 1)
+        print("raw image shape:", raw_image.shape)
+        xtl, ytl, width, height = round(pose[80]), round(pose[81]), round(pose[82]), round(pose[83])
+        xbr, ybr = xtl + width, ytl + height
+        # print("xtl, ytl, xbr, ybr", xtl, ytl, xbr, ybr)
+        img_patch = raw_image[ytl:ybr, xtl:xbr, :]
+        print("img patch shape:", img_patch.shape)
+        os_dir = "../train/halpe26_data/data_by_video/image_patch/video_" + str(v_id).zfill(4)
+        if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
+            os.makedirs(os_dir)
+        save_path = os_dir + "/" + str(img_id_start) + ".jpg"
+        img_id_start += 1
+        print(save_path)
+        cv2.imwrite(save_path, img_patch)
+
+
 # 整个的人体图像patch
 def total_body_img_patch(each_video_all_pose):
     image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
@@ -137,7 +161,7 @@ if __name__ == "__main__":
     for video_read_id in range(0, number_of_test):
         try:
             all_pose = np.array(read_pose_annotation(video_read_id))
-            total_body_img_patch(all_pose)
+            total_body_img_patch_init(all_pose)
         except OSError:
             print("data ", video_read_id, "is not exist")
         else:

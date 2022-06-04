@@ -106,7 +106,7 @@ def draw_pose(frame, bbox, human_keypoints):
 def plot_test_result():
     video_st, video_end = 1, 347
     img_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
-    data_path = "../train/train_data/iou/data_by_video/all_single/"
+    data_path = "../train/halpe26_data/data_by_video/all_single/"
     trained_label = pd.read_csv("../train/trained_label/image_logistic_regression_label.csv", header=None, sep=',',
                                 encoding='utf-8').values
     __st_id = 0
