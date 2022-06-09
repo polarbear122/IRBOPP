@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 import pandas as pd
-
+# from train.test_joint_image_video import calculate_result
+# python 需要import自己的目录，如何加这个目录
 RED = (0, 0, 255)
 GREEN = (0, 255, 0)
 BLUE = (255, 0, 0)
@@ -107,7 +108,7 @@ def plot_test_result():
     video_st, video_end = 1, 347
     img_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
     data_path = "../train/halpe26_data/data_by_video/all_single/"
-    trained_label = pd.read_csv("../train/trained_label/image_logistic_regression_label.csv", header=None, sep=',',
+    trained_label = pd.read_csv("../train/code_devide_random/y_pre_joint.csv", header=None, sep=',',
                                 encoding='utf-8').values
     __st_id = 0
     for str_id in range(video_st, video_end):

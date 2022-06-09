@@ -94,7 +94,7 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_dataset, labels = read_data.read_csv_data_random(data_id=4)
+    train_dataset, labels = read_data.read_csv_train_label_data(data_id=4)
     log.logger.info("%s --训练开始--------------" % (os.path.basename(__file__).split(".")[0]))
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC"]

@@ -1,4 +1,6 @@
 # 提供读取数据的方法
+# 从alpha pose的检测结果和jaad的注释文件中读取keypoints和对应img id，保存结果为csv文件
+
 import pickle
 import cv2
 import numpy as np

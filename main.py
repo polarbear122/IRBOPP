@@ -2,7 +2,7 @@ import torch
 
 import cv2
 import numpy as np
-import train.test_joint_image_video as jo
+import train.code_devide_random.test_joint_image_video as jo
 import pandas as pd
 
 

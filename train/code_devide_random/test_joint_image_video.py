@@ -34,13 +34,13 @@ def calculate_result(joint_list: list):
 if __name__ == "__main__":
     start_at = time.time()
     log.logger.info("联合测试开始-------------------------------------------")
-    raw_image_data, raw_image_label, video_len_list = read_data.read_csv_data_random(data_id=2)
+    raw_image_data, raw_image_label, video_len_list = read_data.read_csv_train_label_data(data_id=2)
     get_data_at = time.time()
-    log.logger.info("测试联合分类器, data大小(%d,%d),%d" %
+    log.logger.info("测试SGD分类器, data大小(%d,%d),%d" %
                     (raw_image_data.shape[0], raw_image_data.shape[1], raw_image_label.shape[0]))
     # 修改原始数据格式，图像级别检测的数据不需要改变，视频级别数据需要修改
-    forest_model = load_model("../trained_model/Forest_image_ml.model")
-    sgd_model = load_model("../trained_model/SGD_image_ml.model")
+    forest_model = load_model("trained_model/Forest_image_ml.model")
+    sgd_model = load_model("trained_model/SGD_image_ml.model")
     log.logger.info("video len list : %s" % len(video_len_list))
     print("raw_image_data shape: ", raw_image_data.shape)
     # raw_video_data, raw_video_label = read_data.read_csv_train_label_data(data_id=4, output_type=1)
