@@ -27,34 +27,34 @@ def calculate_result(joint_list: list):
     if weight < 0.5:
         return 0
     else:
-        print(joint_list)
+        # print(joint_list)
         return 1
 
 
 if __name__ == "__main__":
     start_at = time.time()
     log.logger.info("联合测试开始-------------------------------------------")
-    raw_image_data, raw_image_label, video_len_list = read_data.read_csv_data_random(data_id=2)
+    train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
+        = read_data.read_csv_data_random(data_id=2)
     get_data_at = time.time()
-    log.logger.info("测试联合分类器, data大小(%d,%d),%d" %
-                    (raw_image_data.shape[0], raw_image_data.shape[1], raw_image_label.shape[0]))
+    log.logger.info("测试联合分类器, 测试data大小(%d,%d),%d" %
+                    (test_norm_pose.shape[0], test_norm_pose.shape[1], test_label.shape[0]))
     # 修改原始数据格式，图像级别检测的数据不需要改变，视频级别数据需要修改
-    forest_model = load_model("../trained_model/Forest_image_ml.model")
-    sgd_model = load_model("../trained_model/SGD_image_ml.model")
-    log.logger.info("video len list : %s" % len(video_len_list))
-    print("raw_image_data shape: ", raw_image_data.shape)
+    forest_model = load_model("../train/trained_model/Forest_image_ml.model")
+    sgd_model = load_model("../train/trained_model/SGD_image_ml.model")
+    log.logger.info("video len list : %s" % len(test_video_length_list))
     # raw_video_data, raw_video_label = read_data.read_csv_train_label_data(data_id=4, output_type=1)
     # model_video = load_model("trained_model/SGD_video_unsampled_ml.model")
     # print("raw_video_data shape: ", raw_video_data.shape)
     # y_pre_video = model_video.predict(raw_video_data)
-    y_forest_pred = forest_model.predict(raw_image_data)
+    y_forest_pred = forest_model.predict(test_norm_pose)
     for __i in range(len(y_forest_pred)):
         if y_forest_pred[__i] < 0.5:
             y_forest_pred[__i] = 0
         else:
             y_forest_pred[__i] = 1
-    print("y_forest_pred", y_forest_pred)
-    y_sgd_pred = sgd_model.predict(raw_image_data)
+    # print("y_forest_pred", y_forest_pred)
+    y_sgd_pred = sgd_model.predict(test_norm_pose)
     #  初始化迭代条件
     start_position, end_position = 0, 0
     y_pre_joint = np.zeros(len(y_forest_pred))
@@ -78,7 +78,20 @@ if __name__ == "__main__":
     print("y_pre_joint shape,raw_image_label shape:", y_pre_joint.shape)
     print("____________________________")
     # print("predict shape", y_pre_image.shape, y_pre_video.shape)
-    cal.calculate_all(raw_image_label, y_pre_joint)  # 评估计算结果
+    # cal.calculate_all(test_label, y_pre_joint)  # 基于单张图像评估计算结果
+
+    # 还需要基于一段时间的联合结果来判断，这里设置为1s 30帧判断
+    useful_length = len(y_pre_joint) // 30 * 30
+    y_pre_joint = y_pre_joint[:useful_length].reshape((-1, 30))
+    y_pre_joint_max = np.sum(y_pre_joint, axis=1)  # 30帧图像取一个最大值
+    for __i in range(len(y_pre_joint_max)):
+        if y_pre_joint_max[__i] >= 2:
+            y_pre_joint_max[__i] = 1
+        else:
+            y_pre_joint_max[__i] = 0
+    test_label_max = np.max(test_label[:useful_length].reshape((-1, 30)), axis=1)  # 30帧图像取一个最大值
+    cal.calculate_all(test_label_max, y_pre_joint_max)  # 基于30张图像评估计算结果
+
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序

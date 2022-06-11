@@ -67,5 +67,13 @@ def test_file_read():
             print("data has been load ", str_id)
 
 
+def test_numpy_max():
+    y_pre_joint = np.array([1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0])
+    y_pre_joint = y_pre_joint.reshape((-1, 2))
+    y_pre_joint_max = np.max(y_pre_joint, axis=1)
+    print(y_pre_joint)
+    print(y_pre_joint_max)
+
+
 if __name__ == "__main__":
-    test_file_read()
+    test_numpy_max()
