@@ -13,14 +13,14 @@ def read_data_to_test():
 
 
 # 最近的数字加入头部，队列头部权重最大
-def add_one_num(joint_list: list, num: int):
+def add_one_num(joint_list: list, num: int) -> None:
     length = len(joint_list)
     for __i in range(1, length):
         joint_list[__i] = joint_list[__i - 1]
     joint_list[0] = num
 
 
-def calculate_result(joint_list: list):
+def calculate_result(joint_list: list) -> int:
     weight = 0
     for __i in range(len(joint_list)):
         weight += joint_list[__i] / (2 + __i)
@@ -29,6 +29,37 @@ def calculate_result(joint_list: list):
     else:
         # print(joint_list)
         return 1
+
+
+# 以resize的形式进行判断，将cal__f_n帧图像reshape为1行数据，求和之后，如果该行的和大于2，则设置为label=1
+# jaad的真实数据则reshape为30列之后，算最大值
+def calculate_joint_img_reshape(__y_pred_joint: np.array, __test_label: list) -> None:
+    cal__f_n = 15  # 设置计算的帧数，1s对应30帧
+    reshape_len = len(__y_pred_joint) // cal__f_n * cal__f_n  # 避免长度不规整导致不能reshape
+    __y_pred_joint = __y_pred_joint[:reshape_len].reshape((-1, cal__f_n))
+    y_pred_joint_sum = np.sum(__y_pred_joint, axis=1)  # 多帧图像得到的预测标签求和
+    for __i in range(len(y_pred_joint_sum)):
+        if y_pred_joint_sum[__i] >= 2:
+            y_pred_joint_sum[__i] = 1
+        else:
+            y_pred_joint_sum[__i] = 0
+
+    test_label_max = np.max(test_label[:reshape_len].reshape((-1, cal__f_n)), axis=1)  # 多帧图像取一个最大值
+    cal.calculate_all(test_label_max, y_pred_joint_sum)  # 基于30张图像评估计算结果
+
+
+# 考虑一个人look车辆之后的0.2s内，即某一帧label=1的之后6帧，其依然可以对车辆有一个监测
+# 设置算法如下：如果某帧label=1，则遍历之后六帧，全部设置为label=1
+def calculate_joint_img_delay(__y_pred_joint: np.array, __test_label: list):
+    delay_frame_num = 6
+    label_length = len(__y_pred_joint)
+    y_pred_joint_delay = np.zeros(label_length)
+    for __i in range(label_length):
+        if __y_pred_joint[__i] == 1:
+            for __j in range(delay_frame_num):
+                if __i + __j < label_length - 1:
+                    y_pred_joint_delay[__i + __j] = 1
+    cal.calculate_all(__test_label, y_pred_joint_delay)
 
 
 if __name__ == "__main__":
@@ -43,55 +74,38 @@ if __name__ == "__main__":
     forest_model = load_model("../train/trained_model/Forest_image_ml.model")
     sgd_model = load_model("../train/trained_model/SGD_image_ml.model")
     log.logger.info("video len list : %s" % len(test_video_length_list))
-    # raw_video_data, raw_video_label = read_data.read_csv_train_label_data(data_id=4, output_type=1)
-    # model_video = load_model("trained_model/SGD_video_unsampled_ml.model")
-    # print("raw_video_data shape: ", raw_video_data.shape)
-    # y_pre_video = model_video.predict(raw_video_data)
+
     y_forest_pred = forest_model.predict(test_norm_pose)
-    for __i in range(len(y_forest_pred)):
-        if y_forest_pred[__i] < 0.5:
-            y_forest_pred[__i] = 0
+    for i in range(len(y_forest_pred)):
+        if y_forest_pred[i] < 0.5:
+            y_forest_pred[i] = 0
         else:
-            y_forest_pred[__i] = 1
+            y_forest_pred[i] = 1
     # print("y_forest_pred", y_forest_pred)
     y_sgd_pred = sgd_model.predict(test_norm_pose)
     #  初始化迭代条件
     start_position, end_position = 0, 0
-    y_pre_joint = np.zeros(len(y_forest_pred))
-    # for video_num in range(len(video_len_list)):
-    #     end_position += video_len_list[video_num]
-    #     for iter_x in range(start_position, end_position):
-    #         if iter_x - start_position <= 5:
-    #             y_pre_joint[iter_x] = y_pre_image[iter_x]
-    #         else:
-    #             y_pre_joint[iter_x] = max(y_pre_image[iter_x], y_pre_video[iter_x - 5 * (video_num + 1)])
+    y_pred_joint = np.zeros(len(y_forest_pred))
+
     init_joint_list = [0] * 10
-    for __i in range(len(y_forest_pred)):
-        if y_forest_pred[__i] == y_sgd_pred[__i]:
-            y_pre_joint[__i] = y_forest_pred[__i]
-            add_one_num(init_joint_list, y_forest_pred[__i])
+    for i in range(len(y_forest_pred)):
+        if y_forest_pred[i] == y_sgd_pred[i]:
+            y_pred_joint[i] = y_forest_pred[i]
+            add_one_num(init_joint_list, y_forest_pred[i])
         else:
             result = calculate_result(init_joint_list)
-            y_pre_joint[__i] = result
+            y_pred_joint[i] = result
             add_one_num(init_joint_list, result)
-    np.savetxt("y_pre_joint.csv", y_pre_joint, delimiter=',')
-    print("y_pre_joint shape,raw_image_label shape:", y_pre_joint.shape)
+    np.savetxt("y_pred_joint.csv", y_pred_joint, delimiter=',')
+    print("y_pre_joint shape,raw_image_label shape:", y_pred_joint.shape)
     print("____________________________")
     # print("predict shape", y_pre_image.shape, y_pre_video.shape)
     # cal.calculate_all(test_label, y_pre_joint)  # 基于单张图像评估计算结果
 
-    # 还需要基于一段时间的联合结果来判断，这里设置为1s 30帧判断
-    useful_length = len(y_pre_joint) // 30 * 30
-    y_pre_joint = y_pre_joint[:useful_length].reshape((-1, 30))
-    y_pre_joint_max = np.sum(y_pre_joint, axis=1)  # 30帧图像取一个最大值
-    for __i in range(len(y_pre_joint_max)):
-        if y_pre_joint_max[__i] >= 2:
-            y_pre_joint_max[__i] = 1
-        else:
-            y_pre_joint_max[__i] = 0
-    test_label_max = np.max(test_label[:useful_length].reshape((-1, 30)), axis=1)  # 30帧图像取一个最大值
-    cal.calculate_all(test_label_max, y_pre_joint_max)  # 基于30张图像评估计算结果
-
+    # 还需要基于一段时间的联合结果来判断，calculate_frame参数控制计算的帧数
+    cal.calculate_all(y_forest_pred, test_label)
+    calculate_joint_img_reshape(y_pred_joint, test_label)
+    calculate_joint_img_delay(y_forest_pred, test_label)
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序
