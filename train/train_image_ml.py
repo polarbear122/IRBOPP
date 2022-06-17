@@ -149,7 +149,7 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting"   : gradient_booting
                    }
-    trainer = name_list[3]  # 选择训练器
+    trainer = name_list[1]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))

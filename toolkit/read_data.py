@@ -161,7 +161,7 @@ def normalize_face_point(__pose_arr: np.array):
     face_range = [0, 1, 2, 3, 4, 17, 18]
     normalize_array = np.zeros((len(__pose_arr), 1))
 
-    box_width = np.max(__pose_arr, axis=1)  # 行人的宽度，shape=(number,1)
+    box_width = np.max(__pose_arr, axis=1) - np.min(__pose_arr, axis=1)  # 行人的宽度，shape=(number,1)
     face_height = __pose_arr[:, 18 * 3 + 1] - __pose_arr[:, 17 * 3 + 1]  # 脸部的高度
     face_center_x, face_center_y = __pose_arr[:, 1], __pose_arr[:, 2]  # 脸部中心点（鼻子）的坐标，列向量
     for position in face_range:
@@ -178,11 +178,13 @@ def normalize_face_point(__pose_arr: np.array):
 
 # 正则化所有特征点，以0位置（鼻子）作为零点，所有脸部特征点减去该点坐标
 def normalize_all_point(__pose_arr: np.array):
-    for __j in [1, 3, 5, 17]:
+    # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
+    for __j in [1, 3, 5, 11, 13, 15, 17]:
         norm_x = __pose_arr[:, __j * 3] - __pose_arr[:, (__j + 1) * 3]
-        norm_y = __pose_arr[:, __j * 3 + 1] - __pose_arr[:, (__j + 1) * 3 + 1]
-        __pose_arr = np.concatenate((__pose_arr, norm_x.reshape(-1, 1)), axis=1)  # 特征点的y轴值
+        norm_y = __pose_arr[:, __j * 3 + 1] - __pose_arr[:, (__j + 1) * 3 + 1]  # 特征点的y轴值
+        __pose_arr = np.concatenate((__pose_arr, norm_x.reshape(-1, 1)), axis=1)
         __pose_arr = np.concatenate((__pose_arr, norm_y.reshape(-1, 1)), axis=1)
+    # 所有特征点再减去0位置鼻子处的特征点(x,y)
     for __i in range(1, 26):
         __pose_arr[:, __i * 3] -= __pose_arr[:, 0]
         __pose_arr[:, __i * 3 + 1] -= __pose_arr[:, 1]

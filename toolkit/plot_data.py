@@ -103,12 +103,13 @@ def draw_pose(frame, bbox, human_keypoints):
     return img
 
 
-# 画出检测结果look/not-look
+# 画出检测结果look/not-look,并与真实jaad数据集进行对比
 def plot_test_result():
     video_st, video_end = 1, 347
     img_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
     data_path = "../train/halpe26_data/data_by_video/all_single/"
-    trained_label = pd.read_csv("../train/code_devide_random/y_pre_joint.csv", header=None, sep=',',
+    # 经过训练后的模型的检测结果
+    trained_label = pd.read_csv("../train/y_pred_joint.csv", header=None, sep=',',
                                 encoding='utf-8').values
     __st_id = 0
     for str_id in range(video_st, video_end):
