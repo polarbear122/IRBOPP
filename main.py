@@ -75,5 +75,14 @@ def test_numpy_max():
     print(y_pre_joint_max)
 
 
+def test_np_sort():
+    data_path = "train/halpe26_reid/"
+    train_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8').values
+    a = train_pose
+    a = a[np.lexsort((a[:, 2], a[:, 1], a[:, 0]))]
+    print(a)
+    return a
+
+
 if __name__ == "__main__":
-    test_numpy_max()
+    test_np_sort()

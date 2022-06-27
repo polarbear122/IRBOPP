@@ -1,5 +1,5 @@
 """
-读取alpha pose的结果，在训练阶段，将json数据转换成csv数据，存储一包含video_id，img_id，idx，keypoints，box，label的向量。
+读取alpha pose的结果，在训练阶段，将json数据转换成csv数据，存储一包含video_id，idx，img_id，keypoints，box，label的向量。
 以video_id，idx，img_id的顺序排序
 """
 # 提供读取数据的方法
@@ -71,7 +71,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
             xbr, ybr = str_to_int(annotation["@xbr"]), str_to_int(annotation["@ybr"])
             # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
 
-            max_iou = 0.8
+            max_iou = max_iou_threshold = 0.8
             pose_box = []  # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
             img_frame_id, idx = 0, 0
@@ -80,6 +80,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                 if pose["score"] < 1:
                     continue
                 if pose["image_id"] == annotation["@frame"] + ".jpg":
+                    idx = pose["idx"]
                     pose_box = [pose["box"][0], pose["box"][1], pose["box"][0] + pose["box"][2],
                                 pose["box"][1] + pose["box"][3]]
                     tl_width_height_box = pose["box"]  # 获取alpha pose中的box，(左上角点，宽高)格式
@@ -94,14 +95,14 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                 elif pose["image_id"] == str(int(annotation["@frame"]) + 1) + ".jpg":
                     break
             is_look = annotation["attribute"][2]["#text"]
-            if x_keypoints_proposal and max_iou > 0.6:
+            if x_keypoints_proposal and max_iou > max_iou_threshold:
                 label = 0
                 if is_look == "looking":
                     label = 1
                 y.append(label)
-                x.append([int_video_id] + [img_frame_id] + [idx] + x_keypoints_proposal + max_pose_box + [label])
+                x.append([int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
                 need_plot = False
-                if need_plot and pose_box and max_iou > 0.6:
+                if need_plot and pose_box and max_iou > max_iou_threshold:
                     plot_img = plot_pose_box_look(plot_max_box, annotation, is_look, video_id, x_keypoints_proposal)
                     # video_pose_box.write(plot_img)
 
@@ -110,15 +111,17 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
     return np.mat(x), np.mat(y).T
 
 
-# 传入一个numpy数组和一个排序列表，按顺序对numpy数组进行排序
-def numpy_sort(n_arr: np.array, order_list: list):
-    print(np.sort(n_arr, order='name'))
+# 传入一个numpy数组，按第一列、第二列、第三列的顺序对numpy数组进行排序
+def np_sort(n_arr: np.array):
+    _a = n_arr
+    _a = _a[np.lexsort((_a[:, 2], _a[:, 1], _a[:, 0]))]
+    return _a
 
 
 def get_init_data():
     video_count = 0  # 计算有多少个视频是有效的
-    xml_anno = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/"
-    alpha_pose = "E:/CodeResp/pycode/DataSet/coco17_pose_result/"
+    xml_anno = "D:/codeResp/jaad_data/JAAD/annotations/"
+    alpha_pose = "D:/codeResp/jaad_data/AlphaReidResultNoFast/"
     for i in range(1, 347):
         video_id_name = "video_" + str(i).zfill(4)
         xml_anno_path = xml_anno + video_id_name + ".xml"
@@ -126,9 +129,9 @@ def get_init_data():
         x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id_name, i)
         if x.shape[1] > 1:
             video_count += 1
-            x_array, y_array = np.asarray(x), np.asarray(y)
-            np.savetxt("../train/halpe26_reid/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
-            np.savetxt("../train/halpe26_reid/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
+            x_array, y_array = np_sort(np.asarray(x)), np.asarray(y)
+            np.savetxt("../train/halpe26_reid/data" + str(i) + ".csv", x_array, delimiter=',')
+            np.savetxt("../train/halpe26_reid/label" + str(i) + ".csv", y_array, delimiter=',')
     return video_count
 
 
