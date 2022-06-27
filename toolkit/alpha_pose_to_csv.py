@@ -1,3 +1,7 @@
+"""
+读取alpha pose的结果，在训练阶段，将json数据转换成csv数据，存储一包含video_id，img_id，idx，keypoints，box，label的向量。
+以video_id，idx，img_id的顺序排序
+"""
 # 提供读取数据的方法
 # 从alpha pose的检测结果和jaad的注释文件中读取keypoints和对应img id，保存结果为csv文件
 
@@ -39,7 +43,7 @@ def box_iou(box1, box2):
 
 
 def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
-    x, y = [], []  # # key points 0 1 2 3 4 17 18 label looking not-looking
+    x, y = [], []
     alpha_pose = read_json(alpha_pose_path)
     jaad_anno = xml_read(jaad_anno_path)
     annotations = jaad_anno["annotations"]
@@ -67,10 +71,10 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
             xbr, ybr = str_to_int(annotation["@xbr"]), str_to_int(annotation["@ybr"])
             # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
 
-            max_iou = 0.6
+            max_iou = 0.8
             pose_box = []  # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
-            img_frame_id = 0
+            img_frame_id, idx = 0, 0
             plot_max_box = []
             for pose in alpha_pose:
                 if pose["score"] < 1:
@@ -95,7 +99,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                 if is_look == "looking":
                     label = 1
                 y.append(label)
-                x.append([int_video_id] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
+                x.append([int_video_id] + [img_frame_id] + [idx] + x_keypoints_proposal + max_pose_box + [label])
                 need_plot = False
                 if need_plot and pose_box and max_iou > 0.6:
                     plot_img = plot_pose_box_look(plot_max_box, annotation, is_look, video_id, x_keypoints_proposal)
@@ -106,35 +110,26 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
     return np.mat(x), np.mat(y).T
 
 
-def get_stream_data():
-    data_path = "../train/train_data/iou/data_by_video/single/"
-    label_path = "../train/train_data/iou/data_by_video/single/"
-    for str_id in range(1, 347):
-        try:
-            pose_arr = np.loadtxt(data_path + "data" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
-            label_arr = np.loadtxt(label_path + "label" + str(str_id) + ".csv", dtype=np.float_, delimiter=',')
-            pose, label = normalize_face_point_stream(pose_arr, label_arr)
-            # np.savetxt("train_data/iou/data_by_video/stream/data" + str(str_id) + ".csv", pose, delimiter=',')
-            # np.savetxt("train_data/iou/data_by_video/stream/label" + str(str_id) + ".csv", label, delimiter=',')
-        except OSError:
-            print("data or label ", str_id, "is not exist")
-        else:
-            print("data has been load ", str_id)
+# 传入一个numpy数组和一个排序列表，按顺序对numpy数组进行排序
+def numpy_sort(n_arr: np.array, order_list: list):
+    print(np.sort(n_arr, order='name'))
 
 
 def get_init_data():
-    useful_video_number = 0
+    video_count = 0  # 计算有多少个视频是有效的
+    xml_anno = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/"
+    alpha_pose = "E:/CodeResp/pycode/DataSet/coco17_pose_result/"
     for i in range(1, 347):
-        video_id = "video_" + str(i).zfill(4)
-        xml_anno_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
-        alpha_pose_path = "E:/CodeResp/pycode/DataSet/coco17_pose_result/" + video_id + "/alphapose-results.json"
-        x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id, i)
+        video_id_name = "video_" + str(i).zfill(4)
+        xml_anno_path = xml_anno + video_id_name + ".xml"
+        alpha_pose_path = alpha_pose + video_id_name + "/alphapose-results.json"
+        x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id_name, i)
         if x.shape[1] > 1:
-            useful_video_number += 1
+            video_count += 1
             x_array, y_array = np.asarray(x), np.asarray(y)
-            np.savetxt("../train/coco17_data/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
-            np.savetxt("../train/coco17_data/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
-    return useful_video_number
+            np.savetxt("../train/halpe26_reid/data_by_video/all_single/data" + str(i) + ".csv", x_array, delimiter=',')
+            np.savetxt("../train/halpe26_reid/data_by_video/all_single/label" + str(i) + ".csv", y_array, delimiter=',')
+    return video_count
 
 
 def save_model(file_path, file_name, model):
