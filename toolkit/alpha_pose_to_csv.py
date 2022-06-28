@@ -99,7 +99,6 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                 label = 0
                 if is_look == "looking":
                     label = 1
-                y.append(label)
                 x.append([int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
                 need_plot = False
                 if need_plot and pose_box and max_iou > max_iou_threshold:
@@ -108,7 +107,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
 
     # video_pose_box.release()
     print(video_id, "shape:", np.mat(x).shape, np.mat(y).T.shape)
-    return np.mat(x), np.mat(y).T
+    return np.mat(x)
 
 
 # 传入一个numpy数组，按第一列、第二列、第三列的顺序对numpy数组进行排序
@@ -126,12 +125,11 @@ def get_init_data():
         video_id_name = "video_" + str(i).zfill(4)
         xml_anno_path = xml_anno + video_id_name + ".xml"
         alpha_pose_path = alpha_pose + video_id_name + "/alphapose-results.json"
-        x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id_name, i)
+        x = get_train_data(xml_anno_path, alpha_pose_path, video_id_name, i)
         if x.shape[1] > 1:
             video_count += 1
-            x_array, y_array = np_sort(np.asarray(x)), np.asarray(y)
+            x_array = np_sort(np.asarray(x))
             np.savetxt("../train/halpe26_reid/data" + str(i) + ".csv", x_array, delimiter=',')
-            np.savetxt("../train/halpe26_reid/label" + str(i) + ".csv", y_array, delimiter=',')
     return video_count
 
 
