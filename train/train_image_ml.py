@@ -61,8 +61,8 @@ def svm_trainer(x_train, x_test, y_train, y_test):
 
 
 def forest_trainer(x_train, x_test, y_train, y_test):
-    clf = RandomForestRegressor(n_estimators=10, max_depth=12, random_state=0, min_samples_split=8, min_samples_leaf=20,
-                                verbose=True, n_jobs=-1)
+    clf = RandomForestRegressor(n_estimators=16, max_depth=50, random_state=0, min_samples_split=8,
+                                min_samples_leaf=64, verbose=True, n_jobs=-1)
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     # train_data_score = clf.score(x_train, y_train) * 100 # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
@@ -139,7 +139,8 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 if __name__ == "__main__":
     start_at = time.time()
     train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
-        = read_data.read_csv_data_random(data_id=2)
+        = read_data.read_data_track()
+    print("test_norm_pose.shape:", test_norm_pose.shape)
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
     train_model = {"SGD"               : sgd_trainer,
@@ -149,7 +150,7 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting"   : gradient_booting
                    }
-    trainer = name_list[1]  # 选择训练器
+    trainer = name_list[0]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))
