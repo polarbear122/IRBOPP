@@ -42,7 +42,7 @@ def box_iou(box1, box2):
     return iou
 
 
-def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
+def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid):
     x = []
     alpha_pose = read_json(alpha_pose_path)
     jaad_anno = xml_read(jaad_anno_path)
@@ -71,7 +71,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
             xbr, ybr = str_to_int(annotation["@xbr"]), str_to_int(annotation["@ybr"])
             # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
 
-            max_iou = max_iou_threshold = 0.8
+            max_iou = max_iou_threshold = 0.6
             pose_box = []  # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
             img_frame_id, idx = 0, 0
@@ -99,7 +99,9 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id):
                 label = 0
                 if is_look == "looking":
                     label = 1
-                x.append([int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
+                x.append(
+                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
+                uuid += 1
                 need_plot = False
                 if need_plot and pose_box and max_iou > max_iou_threshold:
                     plot_img = plot_pose_box_look(plot_max_box, annotation, is_look, video_id, x_keypoints_proposal)
@@ -121,17 +123,20 @@ def get_init_data():
     video_count = 0  # 计算有多少个视频是有效的
     xml_anno = "D:/codeResp/jaad_data/JAAD/annotations/"
     alpha_pose = "D:/codeResp/jaad_data/AlphaReidResultNoFast/"
+    uuid = 0
     for i in range(1, 347):
         video_id_name = "video_" + str(i).zfill(4)
         xml_anno_path = xml_anno + video_id_name + ".xml"
         alpha_pose_path = alpha_pose + video_id_name + "/alphapose-results.json"
-        x = get_train_data(xml_anno_path, alpha_pose_path, video_id_name, i)
+        x = get_train_data(xml_anno_path, alpha_pose_path, video_id_name, i, uuid)
+        print("x.shape", x.shape[0], x.shape[1])
         if x.shape[1] > 1:
+            uuid += x.shape[0]
             video_count += 1
             x_array = np_sort(np.asarray(x))
-            y_array = x_array[:,-1]
-            np.savetxt("../train/halpe26_reid/data" + str(i) + ".csv", x_array, delimiter=',')
-            np.savetxt("../train/halpe26_reid/label" + str(i) + ".csv", y_array, delimiter=',')
+            y_array = x_array[:, -1]
+            np.savetxt("../train/halpe26_reid/iou06/data" + str(i) + ".csv", x_array, delimiter=',')
+            np.savetxt("../train/halpe26_reid/iou06/label" + str(i) + ".csv", y_array, delimiter=',')
     return video_count
 
 
