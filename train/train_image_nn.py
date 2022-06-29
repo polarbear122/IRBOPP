@@ -68,7 +68,7 @@ def train_cnn_pose_trainer(x, y):
 
 
 if __name__ == "__main__":
-    train_dataset, labels = read_data.read_csv_data_random(data_id=2)
+    train_dataset, labels = read_data.read_data_no_track(data_id=2)
     train_dataset_torch = torch.from_numpy(train_dataset).type(torch.FloatTensor)
     labels_torch = torch.from_numpy(labels).type(
         torch.LongTensor)  # tensor和numpy对象共享内存，转换很快，几乎不消耗资源; 但如果其中一个变了，另外一个也随之改变，

@@ -33,58 +33,90 @@ test_data_list = [140, 121, 259, 174, 167, 333, 41, 299, 42, 73, 63, 223, 246, 2
                   265, 234, 23, 165, 11, 34, 70, 252, 8, 245, 173]
 
 
-# 读取csv数据，并根据video id随机分成训练数据和测试数据
-def read_csv_data_random(data_id: int):
-    if data_id == 2:
-        data_path = "halpe26_data/data_by_video/single/"
-        label_path = "halpe26_data/data_by_video/single/"
-        # 先读取训练数据集
-        train_pose = pd.read_csv(data_path + "data" + str(train_data_list[0]) + ".csv", header=None, sep=',',
-                                 encoding='utf-8')
-        train_label = pd.read_csv(label_path + "label" + str(train_data_list[0]) + ".csv", header=None, sep=',',
-                                  encoding='utf-8')
-        train_video_length_list = [len(train_label)]
-        for str_id in train_data_list[1:]:
-            try:
-                train_pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
-                                             encoding='utf-8')
-                train_label_arr = pd.read_csv(label_path + "label" + str(str_id) + ".csv", header=None, sep=',',
-                                              encoding='utf-8')
-                print("shape:", train_pose_arr.shape, train_label_arr.shape)
-                train_video_length_list.append(len(train_label_arr))
-                train_pose = np.concatenate((train_pose, train_pose_arr), axis=0)
-                train_label = np.concatenate((train_label, train_label_arr), axis=0)
-            except OSError:
-                print("data or label ", str_id, "is not exist")
-            else:
-                print("data has been load ", str_id)
-        train_norm_pose = normalize_all_point(train_pose)
-
-        # 再读取测试数据集
-        test_pose = pd.read_csv(data_path + "data" + str(train_data_list[0]) + ".csv", header=None, sep=',',
-                                encoding='utf-8')
-        test_label = pd.read_csv(label_path + "label" + str(train_data_list[0]) + ".csv", header=None, sep=',',
-                                 encoding='utf-8')
-        test_video_length_list = [len(test_label)]
-        for str_id in train_data_list[1:]:
-            try:
-                test_pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
-                                            encoding='utf-8')
-                test_label_arr = pd.read_csv(label_path + "label" + str(str_id) + ".csv", header=None, sep=',',
-                                             encoding='utf-8')
-                print("shape:", test_pose_arr.shape, test_label_arr.shape)
-                test_video_length_list.append(len(test_label_arr))
-                test_pose = np.concatenate((test_pose, test_pose_arr), axis=0)
-                test_label = np.concatenate((test_label, test_label_arr), axis=0)
-            except OSError:
-                print("data or label ", str_id, "is not exist")
-            else:
-                print("data has been load ", str_id)
-        test_norm_pose = normalize_all_point(test_pose)
-        return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
+# 读取有track的alpha pose的csv数据，带有idx
+def read_data_track():
+    data_path = "halpe26_reid/iou06/"
+    label_path = "halpe26_reid/iou06/"
+    train_pose, train_label, train_video_length_list = normalize_read(data_path, data_path, train_data_list)
+    test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
+    train_norm_pose = normalize_all_point(train_pose[:, :train_pose.shape[1] - 1])
+    test_norm_pose = normalize_all_point(test_pose[:, :test_pose.shape[1] - 1])
+    return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
 
 
-# test=0:测试用小文件，1:iou all数据，2:中心点检测得到的数据
+# 标准化读取数据集
+def normalize_read(data_path, label_path, _data_list):
+    # 先初始化向量
+    _pose = pd.read_csv(data_path + "data" + str(_data_list[0]) + ".csv", header=None, sep=',', encoding='utf-8')
+    _label = pd.read_csv(label_path + "label" + str(_data_list[0]) + ".csv", header=None, sep=',',
+                         encoding='utf-8')
+    _video_length_list = [len(_label)]
+    for v_id in _data_list[1:]:
+        try:
+            _pose_arr = pd.read_csv(data_path + "data" + str(v_id) + ".csv", header=None, sep=',', encoding='utf-8')
+            _label_arr = pd.read_csv(label_path + "label" + str(v_id) + ".csv", header=None, sep=',', encoding='utf-8')
+            print("shape:", _pose_arr.shape, _label_arr.shape)
+            _pose = np.concatenate((_pose, _pose_arr), axis=0)
+            _label = np.concatenate((_label, _label_arr), axis=0)
+            _video_length_list.append(len(_label_arr))
+        except OSError:
+            print("data or label ", v_id, "is not exist")
+        else:
+            print("data has been load ", v_id)
+    return _pose, _label, _video_length_list
+
+
+# 读取无track的alpha pose的csv数据，并根据video id随机分成训练数据和测试数据
+def read_data_no_track():
+    data_path = "halpe26_data/data_by_video/single/"
+    label_path = "halpe26_data/data_by_video/single/"
+    # 先读取训练数据集
+    train_pose = pd.read_csv(data_path + "data" + str(train_data_list[0]) + ".csv", header=None, sep=',',
+                             encoding='utf-8')
+    train_label = pd.read_csv(label_path + "label" + str(train_data_list[0]) + ".csv", header=None, sep=',',
+                              encoding='utf-8')
+    train_video_length_list = [len(train_label)]
+    for str_id in train_data_list[1:]:
+        try:
+            train_pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
+                                         encoding='utf-8')
+            train_label_arr = pd.read_csv(label_path + "label" + str(str_id) + ".csv", header=None, sep=',',
+                                          encoding='utf-8')
+            print("shape:", train_pose_arr.shape, train_label_arr.shape)
+            train_video_length_list.append(len(train_label_arr))
+            train_pose = np.concatenate((train_pose, train_pose_arr), axis=0)
+            train_label = np.concatenate((train_label, train_label_arr), axis=0)
+        except OSError:
+            print("data or label ", str_id, "is not exist")
+        else:
+            print("data has been load ", str_id)
+    train_norm_pose = normalize_all_point(train_pose)
+
+    # 再读取测试数据集
+    test_pose = pd.read_csv(data_path + "data" + str(train_data_list[0]) + ".csv", header=None, sep=',',
+                            encoding='utf-8')
+    test_label = pd.read_csv(label_path + "label" + str(train_data_list[0]) + ".csv", header=None, sep=',',
+                             encoding='utf-8')
+    test_video_length_list = [len(test_label)]
+    for str_id in train_data_list[1:]:
+        try:
+            test_pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
+                                        encoding='utf-8')
+            test_label_arr = pd.read_csv(label_path + "label" + str(str_id) + ".csv", header=None, sep=',',
+                                         encoding='utf-8')
+            print("shape:", test_pose_arr.shape, test_label_arr.shape)
+            test_video_length_list.append(len(test_label_arr))
+            test_pose = np.concatenate((test_pose, test_pose_arr), axis=0)
+            test_label = np.concatenate((test_label, test_label_arr), axis=0)
+        except OSError:
+            print("data or label ", str_id, "is not exist")
+        else:
+            print("data has been load ", str_id)
+    test_norm_pose = normalize_all_point(test_pose)
+    return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
+
+
+# test=0:测试用小文件，1:iou all数据，2:中心点检测得到的数据，读取时按顺序读取，训练集和测试集此时不分开
 def read_csv_train_label_data(data_id: int):
     number_oftest = 347
     # 从csv文件中读取
@@ -177,19 +209,20 @@ def normalize_face_point(__pose_arr: np.array):
 
 
 # 正则化所有特征点，以0位置（鼻子）作为零点，所有脸部特征点减去该点坐标
-def normalize_all_point(__pose_arr: np.array):
-    # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
-    for __j in [1, 3, 5, 11, 13, 15, 17]:
-        norm_x = __pose_arr[:, __j * 3] - __pose_arr[:, (__j + 1) * 3]
-        norm_y = __pose_arr[:, __j * 3 + 1] - __pose_arr[:, (__j + 1) * 3 + 1]  # 特征点的y轴值
-        __pose_arr = np.concatenate((__pose_arr, norm_x.reshape(-1, 1)), axis=1)
-        __pose_arr = np.concatenate((__pose_arr, norm_y.reshape(-1, 1)), axis=1)
-    # 所有特征点再减去0位置鼻子处的特征点(x,y)
-    for __i in range(1, 26):
-        __pose_arr[:, __i * 3] -= __pose_arr[:, 0]
-        __pose_arr[:, __i * 3 + 1] -= __pose_arr[:, 1]
-    # __pose_array = __pose_array[:, [0, 1, 2, 3, 4, 5, 6, 17, 18, 78, 79, 80, 81]]
-    return __pose_arr
+def normalize_all_point(__keypoints_arr: np.array):
+    #
+    # # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
+    # for __j in [1, 3, 5, 11, 13, 15, 17]:
+    #     norm_x = __keypoints_arr[:, __j * 3] - __keypoints_arr[:, (__j + 1) * 3]
+    #     norm_y = __keypoints_arr[:, __j * 3 + 1] - __keypoints_arr[:, (__j + 1) * 3 + 1]  # 特征点的y轴值
+    #     __keypoints_arr = np.concatenate((__keypoints_arr, norm_x.reshape(-1, 1)), axis=1)
+    #     __keypoints_arr = np.concatenate((__keypoints_arr, norm_y.reshape(-1, 1)), axis=1)
+    # # 所有特征点再减去0位置鼻子处的特征点(x,y)
+    # for __i in range(1, 26):
+    #     __keypoints_arr[:, __i * 3] -= __keypoints_arr[:, 0]
+    #     __keypoints_arr[:, __i * 3 + 1] -= __keypoints_arr[:, 1]
+    # # __pose_array = __pose_array[:, [0, 1, 2, 3, 4, 5, 6, 17, 18, 78, 79, 80, 81]]
+    return __keypoints_arr
 
 
 # 一秒三十帧，每次输出f_p_stream帧为一个视频流，在每行数据后面直接append，标签采用“或”方式相加
