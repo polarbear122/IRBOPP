@@ -1,0 +1,5 @@
+config_csv_data = "D:/CodeResp/IRBOPP/train/halpe26_reid/iou06/"
+config_jaad_clip = "D:/codeResp/jaad_data/JAAD_clips/"
+config_jaad_img = "D:/codeResp/jaad_data/JAAD_image/"
+config_jaad_anno = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/"
+config_alpha_pose = "E:/CodeResp/pycode/DataSet/coco17_pose_result/"

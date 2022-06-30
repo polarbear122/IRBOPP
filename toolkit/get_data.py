@@ -4,6 +4,8 @@
 import pickle
 import cv2
 import numpy as np
+
+from config import config_jaad_anno, config_alpha_pose
 from toolkit.read_pose_data import read_json
 from toolkit.xml_read import xml_read, str_to_int
 from toolkit.read_data import normalize_face_point_stream
@@ -126,8 +128,8 @@ def get_init_data():
     useful_video_number = 0
     for i in range(1, 347):
         video_id = "video_" + str(i).zfill(4)
-        xml_anno_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
-        alpha_pose_path = "E:/CodeResp/pycode/DataSet/coco17_pose_result/" + video_id + "/alphapose-results.json"
+        xml_anno_path = config_jaad_anno + video_id + ".xml"
+        alpha_pose_path = config_alpha_pose + video_id + "/alphapose-results.json"
         x, y = get_train_data(xml_anno_path, alpha_pose_path, video_id, i)
         if x.shape[1] > 1:
             useful_video_number += 1

@@ -3,6 +3,8 @@ import os
 
 import cv2
 
+from config import config_jaad_clip, config_jaad_img
+
 
 def video_to_image(__video_path, __save_path):
     cap = cv2.VideoCapture(__video_path)
@@ -37,10 +39,10 @@ def make_dir_file(path):
 
 
 if __name__ == "__main__":
-    video_id_start = 308
+    video_id_start = 1
     end = 347  # 共有1--346号视频
     for i in range(video_id_start, end):
-        video_path = "E:/CodeResp/pycode/DataSet/JAAD_clips/video_" + str(i).zfill(4) + ".mp4"
-        save_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_" + str(i).zfill(4) + "/"
+        video_path = config_jaad_clip + "video_" + str(i).zfill(4) + ".mp4"
+        save_path = config_jaad_img + "video_" + str(i).zfill(4) + "/"
         make_dir_file(save_path)
         video_to_image(video_path, save_path)

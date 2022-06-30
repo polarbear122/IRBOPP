@@ -1,6 +1,8 @@
 # 读取data和label的csv文件，并以一定的格式返回
 import numpy as np
 import pandas as pd
+
+from config import config_csv_data
 from log_config import log
 import time
 import scipy.io as scio
@@ -35,8 +37,8 @@ test_data_list = [140, 121, 259, 174, 167, 333, 41, 299, 42, 73, 63, 223, 246, 2
 
 # 读取有track的alpha pose的csv数据，带有idx
 def read_data_track():
-    data_path = "halpe26_reid/iou06/"
-    label_path = "halpe26_reid/iou06/"
+    data_path = config_csv_data
+    label_path = config_csv_data
     train_pose, train_label, train_video_length_list = normalize_read(data_path, data_path, train_data_list)
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
     train_norm_pose = normalize_all_point(train_pose[:, :train_pose.shape[1] - 1])
@@ -281,11 +283,15 @@ def mat_img_read():
 
 
 if __name__ == "__main__":
+    # train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
+    #     = read_data_track()
+    # a = np.mean(train_norm_pose, axis=0)
+    # b = np.mean(test_norm_pose, axis=0)
     st = time.time()
-    read_csv_train_label_data(data_id=4, output_type=1)
+    read_csv_train_label_data(data_id=4)
     t1 = time.time()
     print("------------------------------------")
     print("pandas time: ", t1 - st)
-    read_csv_train_label_data(data_id=5, output_type=1)
+    read_csv_train_label_data(data_id=5)
     t2 = time.time()
     print("np time: ", t2 - t1)

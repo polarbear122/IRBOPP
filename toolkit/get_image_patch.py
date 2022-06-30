@@ -6,6 +6,8 @@ import numpy as np
 import cv2
 import os
 
+from config import config_jaad_img
+
 
 def read_pose_annotation(__video_id: int):
     data_path = "../train/halpe26_data/data_by_video/all_single/"
@@ -36,7 +38,7 @@ def int_to_even(number: int):
 
 # 输出脸部图像的大小，宽和高
 def face_image_patch(each_video_all_pose):
-    image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
+    image_path = config_jaad_img + "/video_"
     img_r_width, img_r_height = 80, 200  # 输出脸部图像的大小，宽和高
     each_video_pose = each_video_all_pose[0]
     img_id_start = 0
@@ -85,7 +87,7 @@ def face_image_patch(each_video_all_pose):
 
 # 整个的人体图像patch,未经过resize，保留原始大小
 def total_body_img_patch_init(each_video_all_pose):
-    image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
+    image_path = config_jaad_img + "/video_"
     each_video_pose = each_video_all_pose[0]
     img_id_start = 0
     for pose in each_video_pose:
@@ -109,7 +111,7 @@ def total_body_img_patch_init(each_video_all_pose):
 
 # 整个的人体图像patch
 def total_body_img_patch(each_video_all_pose):
-    image_path = "E:/CodeResp/pycode/DataSet/JAAD_image/video_"
+    image_path = config_jaad_img + "/video_"
     img_r_width, img_r_height = 80, 200  # 输出结果图像的大小，宽和高
     each_video_pose = each_video_all_pose[0]
     img_id_start = 0
