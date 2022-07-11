@@ -1,6 +1,6 @@
 # 读取xml文件
 import logging
-
+import pickle
 import cv2
 import xmltodict
 
@@ -15,7 +15,21 @@ def xml_read(xml_file_path):
 
 # 输入字符类型的浮点数，返回int，用于cv2画图
 def str_to_int(float_str):
-    return int(float(float_str))
+    return round(float(float_str))
+
+
+def save_model(file_path, file_name, model):
+    with open(file=file_path + file_name, mode="wb") as f:
+        f.write(model)
+
+
+def load_model(file_path):
+    with open(file=file_path, mode="rb") as trained_model:
+        s2 = trained_model.read()
+        model = pickle.loads(s2)
+    # expected = test_y
+    # predicted = model1.predict(test_X)
+    return model
 
 
 if __name__ == "__main__":

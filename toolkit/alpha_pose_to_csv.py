@@ -5,11 +5,11 @@
 # 提供读取数据的方法
 # 从alpha pose的检测结果和jaad的注释文件中读取keypoints和对应img id，保存结果为csv文件
 
-import pickle
+
 import cv2
 import numpy as np
 from toolkit.read_pose_data import read_json
-from toolkit.xml_read import xml_read, str_to_int
+from toolkit.tool import xml_read, str_to_int
 from toolkit.read_data import normalize_face_point_stream
 from toolkit.plot_data import plot_pose_box_look
 
@@ -70,7 +70,9 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
             xtl, ytl = str_to_int(annotation["@xtl"]), str_to_int(annotation["@ytl"])
             xbr, ybr = str_to_int(annotation["@xbr"]), str_to_int(annotation["@ybr"])
             # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
-
+            if xtl <= 0 or ytl <= 0 or (xbr - xtl) <= 0 or (ybr - ytl) <= 0:
+                print(annotation)
+                continue
             max_iou = max_iou_threshold = 0.6
             pose_box = []  # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
@@ -95,7 +97,8 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
                 elif pose["image_id"] == str(int(annotation["@frame"]) + 1) + ".jpg":
                     break
             is_look = annotation["attribute"][2]["#text"]
-            if x_keypoints_proposal and max_iou > max_iou_threshold:
+            pose_in_img = max_pose_box and 0 < max_pose_box[0] < 1920 and 0 < max_pose_box[1] < 1080 and 0 < max_pose_box[2] < 1920 and 0 < max_pose_box[3] < 1080
+            if x_keypoints_proposal and max_iou > max_iou_threshold and pose_in_img:
                 label = 0
                 if is_look == "looking":
                     label = 1
@@ -135,23 +138,9 @@ def get_init_data():
             video_count += 1
             x_array = np_sort(np.asarray(x))
             y_array = x_array[:, -1]
-            np.savetxt("../train/halpe26_reid/iou06/data" + str(i) + ".csv", x_array, delimiter=',')
-            np.savetxt("../train/halpe26_reid/iou06/label" + str(i) + ".csv", y_array, delimiter=',')
+            np.savetxt("../train/halpe26_reid/data" + str(i) + ".csv", x_array, delimiter=',')
+            np.savetxt("../train/halpe26_reid/label" + str(i) + ".csv", y_array, delimiter=',')
     return video_count
-
-
-def save_model(file_path, file_name, model):
-    with open(file=file_path + file_name, mode="wb") as f:
-        f.write(model)
-
-
-def load_model(file_path):
-    with open(file=file_path, mode="rb") as trained_model:
-        s2 = trained_model.read()
-        model = pickle.loads(s2)
-    # expected = test_y
-    # predicted = model1.predict(test_X)
-    return model
 
 
 if __name__ == "__main__":

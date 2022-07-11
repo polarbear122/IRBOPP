@@ -1,5 +1,7 @@
 config_csv_data = "D:/CodeResp/IRBOPP/train/halpe26_reid/iou06/"
 config_jaad_clip = "D:/CodeResp/jaad_data/JAAD_clips/"
-config_jaad_img = "D:/CodeResp/jaad_data/JAAD_image/"
+config_jaad_img = "C:/datasetzyf/JAAD_image/"
 config_jaad_anno = "D:/CodeResp/jaad_data/JAAD/annotations/"
 config_alpha_pose = "D:/CodeResp/jaad_data/AlphaReidResultNoFast/"
+config_img_save_patch = "C:/datasetzyf/jaad_patch/video_"
+config_dataset_root = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070/"

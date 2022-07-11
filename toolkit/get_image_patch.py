@@ -6,11 +6,10 @@ import numpy as np
 import cv2
 import os
 
-from config import config_jaad_img
+from config import config_jaad_img, config_img_save_patch, config_dataset_root
+from toolkit.read_data import train_data_list, test_data_list
 
 config_csv_data = "../train/halpe26_reid/"
-config_img_face_patch = "../train/halpe26_reid/image_face_patch/video_"
-config_img_patch = "../train/halpe26_reid/image_patch/video_"
 
 
 def read_pose_annotation(__video_id: int):
@@ -45,28 +44,42 @@ def total_body_img_patch_init(each_video_all_pose):
     image_path = config_jaad_img + "video_"
     each_video_pose = each_video_all_pose[0]
     img_id_start = 0
+    print(config_dataset_root)
+    train_txt = open(config_dataset_root + 'train.txt', 'a')  # 以追加写方式打开文件
+    test_txt = open(config_dataset_root + 'test.txt', 'a')
     for pose in each_video_pose:
-        v_id, img_id, label = int(pose[1]), int(pose[3]), int(pose[86])
+        uuid, v_id, idx, img_id, label = int(pose[0]), int(pose[1]), int(pose[2]), int(pose[3]), int(pose[86])
         img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
         raw_image = cv2.imread(img_file_path, 1)
-        print("raw image shape:", raw_image.shape)
+
         xtl, ytl, width, height = round(pose[82]), round(pose[83]), round(pose[84]), round(pose[85])
         xbr, ybr = xtl + width, ytl + height
+        print(ytl, ybr, xtl, xbr)
         # print("xtl, ytl, xbr, ybr", xtl, ytl, xbr, ybr)
         img_patch = raw_image[ytl:ybr, xtl:xbr, :]
         print("img patch shape:", img_patch.shape)
-        os_dir = config_img_patch + str(v_id).zfill(4)
+        os_dir = config_img_save_patch + str(v_id).zfill(4)
         if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
             os.makedirs(os_dir)
-        save_path = os_dir + "/" + str(img_id_start) + ".jpg"
+        img_patch_path = os_dir + "/" + str(img_id_start) + ".jpg"
         img_id_start += 1
-        print(save_path)
-        cv2.imwrite(save_path, img_patch)
+        print(img_patch_path)
+        cv2.imwrite(img_patch_path, img_patch)
+        # 由于训练的图像需要得到uuid，所以路径中新增uuid和idx
+        img_patch_path_to_train = img_patch_path + "*" + str(uuid) + "/" + str(idx)
+        if v_id in train_data_list:
+            train_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
+        elif v_id in test_data_list:
+            test_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
+        else:
+            print("error, video id is not in train or test list")
+    train_txt.close()
+    test_txt.close()
 
 
 if __name__ == "__main__":
     number_of_test = 347  # 测试的视频量
-    for video_read_id in range(0, number_of_test):
+    for video_read_id in range(1, number_of_test):
         try:
             all_pose = np.array(read_pose_annotation(video_read_id))
             total_body_img_patch_init(all_pose)
