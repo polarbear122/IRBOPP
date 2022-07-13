@@ -16,7 +16,8 @@ from sklearn.preprocessing import StandardScaler
 import calculate.calculate as cal
 import toolkit.data_resample as data_resample
 from log_config import log
-from toolkit import get_data, read_data
+from toolkit import read_data
+from toolkit.tool import save_model
 
 
 def sgd_trainer(all_data, all_labels):
@@ -94,7 +95,7 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_dataset, labels = read_data.read_data_no_track(data_id=4)
+    train_dataset, labels = read_data.read_data_no_track()
     log.logger.info("%s --训练开始--------------" % (os.path.basename(__file__).split(".")[0]))
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC"]
@@ -107,7 +108,7 @@ if __name__ == "__main__":
     log.logger.info(
         "开始训练%s分类器:数据规模(%d,%d),%d" % (trainer, train_dataset.shape[0], train_dataset.shape[1], labels.shape[0]))
     model = train_model.get(trainer, default)(train_dataset, labels)  # 执行对应的函数，如果没有就执行默认的函数
-    get_data.save_model("../trained_model/", trainer + "_video_unsampled_ml.model", model)
+    save_model("../trained_model/", trainer + "_video_unsampled_ml.model", model)
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序

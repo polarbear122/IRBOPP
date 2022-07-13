@@ -5,7 +5,7 @@ import numpy as np
 import calculate.calculate as cal
 import toolkit.read_data as read_data
 from log_config import log
-from toolkit.get_data import load_model
+from toolkit.tool import load_model
 
 
 def read_data_to_test():
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     start_at = time.time()
     log.logger.info("联合测试开始-------------------------------------------")
     train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
-        = read_data.read_data_no_track(data_id=2)
+        = read_data.read_data_no_track()
     get_data_at = time.time()
     log.logger.info("测试联合分类器, 测试data大小(%d,%d),%d" %
                     (test_norm_pose.shape[0], test_norm_pose.shape[1], test_label.shape[0]))

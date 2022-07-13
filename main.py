@@ -1,9 +1,11 @@
-import torch
+import random
 
 import cv2
 import numpy as np
-import train.test_joint_image_video as jo
 import pandas as pd
+import torch
+
+import train.test_joint_image_video as jo
 
 
 def test_cuda():
@@ -53,6 +55,7 @@ def test_python_input():
     print(init_list)
 
 
+# 测试读取csv数据
 def test_file_read():
     data_path = "halpe26_data/data_by_video/single/"
 
@@ -67,6 +70,7 @@ def test_file_read():
             print("data has been load ", str_id)
 
 
+# 求numpy最大值
 def test_numpy_max():
     y_pre_joint = np.array([1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0])
     y_pre_joint = y_pre_joint.reshape((-1, 2))
@@ -75,6 +79,7 @@ def test_numpy_max():
     print(y_pre_joint_max)
 
 
+# 测试numpy的排序功能
 def test_np_sort():
     data_path = "train/halpe26_reid/"
     train_pose = pd.read_csv(data_path + "data1.csv", header=None, sep=',', encoding='utf-8').values
@@ -84,5 +89,17 @@ def test_np_sort():
     return a
 
 
+# 生成随机数组
+def random_int_list(start, stop, length):
+    start, stop = (int(start), int(stop)) if start <= stop else (int(stop), int(start))
+    length = int(abs(length)) if length else 0
+    random_list = []
+    for i in range(length):
+        random_list.append(random.randint(start, stop))
+    return random_list[:207], random_list[207:]
+
+
 if __name__ == "__main__":
-    test_np_sort()
+    list1, list2 = random_int_list(1, 347, 346)
+    print(list1)
+    print(list2)

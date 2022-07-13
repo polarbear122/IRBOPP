@@ -15,9 +15,11 @@ from sklearn.ensemble import GradientBoostingClassifier
 import calculate.calculate as cal
 import toolkit.data_resample as data_resample
 from log_config import log
-from toolkit import get_data, read_data
+from toolkit import tool, read_data
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
+
+from toolkit.tool import save_model
 
 """
 带有 SGD 训练的线性分类器（SVM、逻辑回归等）。
@@ -31,7 +33,7 @@ partial_fitSGD 允许通过该方法进行小批量（在线/核外）学习。�
 
 def sgd_trainer(x_train, x_test, y_train, y_test):
     clf = make_pipeline(StandardScaler(),
-                        SGDClassifier(max_iter=1000, tol=1e-3, n_jobs=-1, loss="log", penalty="l1"))  # 设置训练器
+                        SGDClassifier(max_iter=3000, tol=1e-3, n_jobs=-1, loss="log", penalty="l1"))  # 设置训练器
     # todo  改变loss函数
     # x_train, y_train = sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
@@ -61,7 +63,7 @@ def svm_trainer(x_train, x_test, y_train, y_test):
 
 
 def forest_trainer(x_train, x_test, y_train, y_test):
-    clf = RandomForestRegressor(n_estimators=16, max_depth=50, random_state=0, min_samples_split=8,
+    clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
                                 min_samples_leaf=64, verbose=True, n_jobs=-1)
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
@@ -157,7 +159,7 @@ if __name__ == "__main__":
 
     model = train_model.get(trainer, default)(train_norm_pose, test_norm_pose, train_label,
                                               test_label)  # 执行对应的函数，如果没有就执行默认的函数
-    get_data.save_model("../train/trained_model/", trainer + "_image_ml.model", model)
+    save_model("../train/trained_model/", trainer + "_image_ml.model", model)
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序
