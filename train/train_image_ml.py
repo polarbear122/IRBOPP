@@ -65,6 +65,7 @@ def svm_trainer(x_train, x_test, y_train, y_test):
 def forest_trainer(x_train, x_test, y_train, y_test):
     clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
                                 min_samples_leaf=64, verbose=True, n_jobs=-1)
+    clf = RandomForestRegressor(n_estimators=256, random_state=0, max_depth=256, verbose=True, n_jobs=-1)
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     # train_data_score = clf.score(x_train, y_train) * 100 # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
@@ -152,7 +153,7 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting"   : gradient_booting
                    }
-    trainer = name_list[0]  # 选择训练器
+    trainer = name_list[2]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))

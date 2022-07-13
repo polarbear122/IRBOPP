@@ -99,7 +99,15 @@ def random_int_list(start, stop, length):
     return random_list[:207], random_list[207:]
 
 
+# 测试numpy数组大小能否重新初始化
+def numpy_arr_reshape():
+    num1 = np.zeros(2)
+    num2 = np.zeros(2)
+    num1 = np.concatenate((num1, num2))
+    print(num1)
+    num1 = np.zeros((1, 2))
+    print(num1)
+
+
 if __name__ == "__main__":
-    list1, list2 = random_int_list(1, 347, 346)
-    print(list1)
-    print(list2)
+    numpy_arr_reshape()

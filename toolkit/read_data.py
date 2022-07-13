@@ -4,10 +4,12 @@ import numpy as np
 import pandas as pd
 import scipy.io as scio
 
+import config
 from config import config_csv_data, train_data_list, test_data_list
 
 
 # 读取有track的alpha pose的csv数据，带有idx
+# 但是没有转换为stream姿势流的处理过程，依然是单帧数据
 def read_data_track():
     data_path = config_csv_data
     label_path = config_csv_data
@@ -16,6 +18,18 @@ def read_data_track():
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
     train_norm_pose = normalize_all_point(train_pose[:, 4:86])  # 4是特征点开始，82为特征点结束，82:86为box
     test_norm_pose = normalize_all_point(test_pose[:, 4:86])
+    return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
+
+
+# 数据转换成stream后导出
+def read_data_stream():
+    data_path = config_csv_data
+    label_path = config_csv_data
+    # train_pose、test_pose会读取到87列数据
+    train_pose, train_label, train_video_length_list = normalize_read(data_path, data_path, train_data_list)
+    test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
+    train_norm_pose = norm_points_to_stream(train_pose)
+    test_norm_pose = norm_points_to_stream(test_pose)
     return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
 
 
@@ -44,19 +58,31 @@ def normalize_read(data_path: str, label_path: str, _data_list: list):
 # 将读取到的单帧csv数据转化为流数据
 def norm_points_to_stream(_pose_data: np.array):
     # 一次叠加5帧姿势
-    uuid_arr, v_id_arr, idx_arr, img_id_arr = _pose_data[0], _pose_data[1], _pose_data[2], _pose_data[3]
-    poses_arr = _pose_data[4:86]  # 广义范围内的特征点
-    pose_point_arr = _pose_data[4:82]  # 狭义范围内的特征点
-    box_arr = _pose_data[82:86]
-    label_arr = _pose_data[86]
+    uuid_arr, v_id_arr, idx_arr, img_id_arr = _pose_data[:, 0], _pose_data[:, 1], _pose_data[:, 2], _pose_data[:, 3]
+    half_top_position_list = []
+    for i in config.half_top_position:
+        half_top_position_list.append(3 * i + 4)
+        half_top_position_list.append(3 * i + 1 + 4)
+        half_top_position_list.append(3 * i + 2 + 4)
+    poses_arr = _pose_data[:, half_top_position_list + [0, 1, 2, 3, 82, 83, 84, 85]]  # 广义范围内的特征点
+    # poses_arr = _pose_data[:, :86]
+    pose_point_arr = _pose_data[:, 4:82]  # 狭义范围内的特征点
+    box_arr = _pose_data[:, 82:86]
+    label_arr = _pose_data[:, 86]
+    pose_norm_stream = []
     for u in range(len(_pose_data)):
-        uuid, v_id, idx, img_id = uuid_arr[u], v_id_arr[u], idx_arr[u], img_id_arr[u]
-        poses = poses_arr[u]
         # 往前追溯5帧
-        pose_concat = poses
+        pose_concat = poses_arr[u]
         for i in range(4):
-            pose_concat = np.concatenate((pose_concat, poses_arr[u-i-1]), axis=0)
-    pass
+            # 如果视频id不正确，或第u帧之前无图像，或者前面i帧的idx和第u帧的idx不一致，都只添加0矩阵
+            if v_id_arr[u - i - 1] != v_id_arr[u] or u - i - 1 <= 0 or idx_arr[u - i - 1] != idx_arr[u]:
+                pose_temp = np.zeros((len(poses_arr[u]),))
+            else:
+                pose_temp = poses_arr[u - i - 1]
+            pose_concat = np.concatenate((pose_concat, pose_temp), axis=0)
+        pose_norm_stream.append(pose_concat)
+    pose_norm_stream_mat = np.asarray(pose_norm_stream)
+    return pose_norm_stream_mat
 
 
 # 读取无track的alpha pose的csv数据，并根据video id随机分成训练数据和测试数据
@@ -203,4 +229,4 @@ def mat_img_read():
 
 
 if __name__ == "__main__":
-    pass
+    read_data_track()

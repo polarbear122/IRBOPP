@@ -5,6 +5,11 @@ config_jaad_anno = "D:/CodeResp/jaad_data/JAAD/annotations/"
 config_alpha_pose = "D:/CodeResp/jaad_data/AlphaReidResultNoFast/"
 config_img_save_patch = "C:/datasetzyf/jaad_patch/video_"
 config_dataset_root = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070/"
+
+face_position = [0, 1, 2, 3, 4]  # 脸部特征点位置
+head_position = [0, 1, 2, 3, 4, 17, 18]  # 头部特征点位置
+half_top_position = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 17, 18, 19]  # 上半身位置
+
 train_data_list = [294, 11, 7, 49, 168, 141, 204, 100, 74, 269, 1, 64, 254, 272, 57, 311, 117, 8, 128, 174, 303, 138,
                    131, 335, 292, 41, 203, 202, 279, 338, 239, 73, 197, 146, 214, 297, 321, 224, 202, 334, 121, 185, 12,
                    211, 79, 285, 224, 125, 70, 195, 38, 152, 276, 128, 50, 37, 253, 22, 13, 290, 199, 346, 92, 321, 58,
