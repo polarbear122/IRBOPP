@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 # from train.test_joint_image_video import calculate_result
 # python 需要import自己的目录，如何加这个目录
-from config import config_jaad_img
+from config import jaad_img
 
 RED = (0, 0, 255)
 GREEN = (0, 255, 0)
@@ -108,7 +108,7 @@ def draw_pose(frame, bbox, human_keypoints):
 # 画出检测结果look/not-look,并与真实jaad数据集进行对比
 def plot_test_result():
     video_st, video_end = 1, 347
-    img_path = config_jaad_img+"/video_"
+    img_path = jaad_img + "/video_"
     data_path = "../train/halpe26_data/data_by_video/all_single/"
     # 经过训练后的模型的检测结果
     trained_label = pd.read_csv("../train/y_pred_joint.csv", header=None, sep=',',

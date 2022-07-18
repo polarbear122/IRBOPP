@@ -86,7 +86,7 @@ def linear_svc_trainer(x_train, x_test, y_train, y_test):
     clf = make_pipeline(StandardScaler(),
                         svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, tol=0.0001, C=1.0,
                                       multi_class='ovr', fit_intercept=True, intercept_scaling=1, class_weight=None,
-                                      verbose=0, random_state=None, max_iter=2 ** 12))
+                                      verbose=0, random_state=None, max_iter=2 ** 10))
 
     # x_train, y_train = data_resample.sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
@@ -101,9 +101,8 @@ def linear_svc_trainer(x_train, x_test, y_train, y_test):
 
 def logistic_regression(x_train, x_test, y_train, y_test):
     clf = make_pipeline(StandardScaler(),
-                        LogisticRegression(penalty='l1', dual=False, tol=0.001, C=1.0, fit_intercept=True,
+                        LogisticRegression(penalty='l2', dual=False, tol=0.001, C=1.0, fit_intercept=True,
                                            intercept_scaling=1, class_weight=None, random_state=None,
-                                           solver="liblinear",
                                            max_iter=100, multi_class='auto', verbose=0, warm_start=False, n_jobs=-1,
                                            l1_ratio=None))
 
@@ -152,8 +151,8 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting": gradient_booting
                    }
-    trainer = name_list[2]  # 选择训练器
-    log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
+    trainer = name_list[4]  # 选择训练器
+    log.logger.info("%s 多帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))
 

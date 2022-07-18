@@ -1,5 +1,7 @@
 import logging
 
+import config
+
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 
 # LOG_FORMAT = "%(asctime)s - %(levelname)s - %(filename)s, line:%(lineno)d - %(message)s" 带有文件名、行号
@@ -10,13 +12,13 @@ logger.setLevel(logging.INFO)
 # 这里设置日志的级别
 
 # 输出到文件
-file_handler = logging.FileHandler("D:/CodeResp/IRBOPP/log_config/all.log", mode='a', encoding='utf-8')
+file_handler = logging.FileHandler(config.IRBOPP + "log_config/all.log", mode='a', encoding='utf-8')
 
 # 输出到控制台
 stream_handler = logging.StreamHandler()
 
 # 错误日志单独输出到一个文件
-error_handler = logging.FileHandler("D:/CodeResp/IRBOPP/log_config/error.log", mode='a', encoding='utf-8')
+error_handler = logging.FileHandler(config.IRBOPP + "log_config/error.log", mode='a', encoding='utf-8')
 error_handler.setLevel(logging.ERROR)
 # 注意这里，错误日志只记录ERROR级别的日志
 

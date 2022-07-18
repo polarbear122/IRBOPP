@@ -1,6 +1,5 @@
 # 临时图片文件
 toolkit/from_mat/
-log_file
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

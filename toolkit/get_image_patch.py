@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 import os
 
-from config import config_jaad_img, config_img_save_patch, config_dataset_root
+from config import jaad_img, img_save_patch, dataset_root
 from toolkit.read_data import train_data_list, test_data_list
 
 config_csv_data = "../train/halpe26_reid/"
@@ -41,12 +41,12 @@ def int_to_even(number: int):
 
 # 整个的人体图像patch,未经过resize，保留原始大小
 def total_body_img_patch_init(each_video_all_pose):
-    image_path = config_jaad_img + "video_"
+    image_path = jaad_img + "video_"
     each_video_pose = each_video_all_pose[0]
     img_id_start = 0
-    print(config_dataset_root)
-    train_txt = open(config_dataset_root + 'train.txt', 'a')  # 以追加写方式打开文件
-    test_txt = open(config_dataset_root + 'test.txt', 'a')
+    print(dataset_root)
+    train_txt = open(dataset_root + 'train.txt', 'a')  # 以追加写方式打开文件
+    test_txt = open(dataset_root + 'test.txt', 'a')
     for pose in each_video_pose:
         uuid, v_id, idx, img_id, label = int(pose[0]), int(pose[1]), int(pose[2]), int(pose[3]), int(pose[86])
         img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
@@ -58,7 +58,7 @@ def total_body_img_patch_init(each_video_all_pose):
         # print("xtl, ytl, xbr, ybr", xtl, ytl, xbr, ybr)
         img_patch = raw_image[ytl:ybr, xtl:xbr, :]
         print("img patch shape:", img_patch.shape)
-        os_dir = config_img_save_patch + str(v_id).zfill(4)
+        os_dir = img_save_patch + str(v_id).zfill(4)
         if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
             os.makedirs(os_dir)
         img_patch_path = os_dir + "/" + str(img_id_start) + ".jpg"

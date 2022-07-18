@@ -5,14 +5,14 @@ import pandas as pd
 import scipy.io as scio
 
 import config
-from config import config_csv_data, train_data_list, test_data_list
+from config import csv_data, train_data_list, test_data_list
 
 
 # 读取有track的alpha pose的csv数据，带有idx
 # 但是没有转换为stream姿势流的处理过程，依然是单帧数据
 def read_data_track():
-    data_path = config_csv_data
-    label_path = config_csv_data
+    data_path = csv_data
+    label_path = csv_data
     # train_pose、test_pose会读取到87列数据
     train_pose, train_label, train_video_length_list = normalize_read(data_path, data_path, train_data_list)
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
@@ -23,8 +23,8 @@ def read_data_track():
 
 # 数据转换成stream后导出
 def read_data_stream():
-    data_path = config_csv_data
-    label_path = config_csv_data
+    data_path = csv_data
+    label_path = csv_data
     # train_pose、test_pose会读取到87列数据
     train_pose, train_label, train_video_length_list = normalize_read(data_path, data_path, train_data_list)
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
@@ -65,7 +65,7 @@ def norm_points_to_stream(_pose_data: np.array):
         half_top_position_list.append(3 * i + 1 + 4)
         half_top_position_list.append(3 * i + 2 + 4)
     poses_arr = _pose_data[:, half_top_position_list + [0, 1, 2, 3, 82, 83, 84, 85]]  # 广义范围内的特征点
-    # poses_arr = _pose_data[:, :86]
+    poses_arr = normalize_all_point(_pose_data[:, 4:86])
     pose_point_arr = _pose_data[:, 4:82]  # 狭义范围内的特征点
     box_arr = _pose_data[:, 82:86]
     label_arr = _pose_data[:, 86]
@@ -159,6 +159,7 @@ def normalize_face_point(__pose_arr: np.array):
 
 # 正则化所有特征点，以0位置（鼻子）作为零点，所有脸部特征点减去该点坐标
 def normalize_all_point(__keypoints_arr: np.array):
+
     # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
     for __j in [1, 3, 5, 11, 13, 15, 17]:
         norm_x = __keypoints_arr[:, __j * 3] - __keypoints_arr[:, (__j + 1) * 3]
@@ -170,6 +171,7 @@ def normalize_all_point(__keypoints_arr: np.array):
         __keypoints_arr[:, __i * 3] -= __keypoints_arr[:, 0]
         __keypoints_arr[:, __i * 3 + 1] -= __keypoints_arr[:, 1]
     # __pose_array = __pose_array[:, [0, 1, 2, 3, 4, 5, 6, 17, 18, 78, 79, 80, 81]]
+
     return __keypoints_arr
 
 

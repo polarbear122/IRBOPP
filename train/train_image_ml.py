@@ -3,22 +3,19 @@
 import os
 import pickle
 import time
+
 import numpy as np
-import sklearn
 from sklearn import svm
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import SGDClassifier, LogisticRegression
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.ensemble import GradientBoostingClassifier
+
 import calculate.calculate as cal
 import toolkit.data_resample as data_resample
 from log_config import log
-from toolkit import tool, read_data
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import RandomForestClassifier
-
+from toolkit import read_data
 from toolkit.tool import save_model
 
 """
@@ -33,7 +30,8 @@ partial_fitSGD 允许通过该方法进行小批量（在线/核外）学习。�
 
 def sgd_trainer(x_train, x_test, y_train, y_test):
     clf = make_pipeline(StandardScaler(),
-                        SGDClassifier(max_iter=3000, tol=1e-3, n_jobs=-1, loss="log", penalty="l1"))  # 设置训练器
+                        SGDClassifier(max_iter=3000, tol=1e-4, n_jobs=-1, l1_ratio=0.1, loss="hinge",
+                                      penalty="l1"))  # 设置训练器
     # todo  改变loss函数
     # x_train, y_train = sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
@@ -146,14 +144,14 @@ if __name__ == "__main__":
     print("test_norm_pose.shape:", test_norm_pose.shape)
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
-    train_model = {"SGD"               : sgd_trainer,
-                   "SVM"               : svm_trainer,
-                   "Forest"            : forest_trainer,
-                   "LinearSVC"         : linear_svc_trainer,
+    train_model = {"SGD": sgd_trainer,
+                   "SVM": svm_trainer,
+                   "Forest": forest_trainer,
+                   "LinearSVC": linear_svc_trainer,
                    "LogisticRegression": logistic_regression,
-                   "GradientBooting"   : gradient_booting
+                   "GradientBooting": gradient_booting
                    }
-    trainer = name_list[2]  # 选择训练器
+    trainer = name_list[4]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))
