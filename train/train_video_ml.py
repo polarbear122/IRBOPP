@@ -64,7 +64,7 @@ def svm_trainer(x_train, x_test, y_train, y_test):
 def forest_trainer(x_train, x_test, y_train, y_test):
     clf = RandomForestRegressor(n_estimators=16, max_depth=128, random_state=0, min_samples_split=2,
                                 min_samples_leaf=1, verbose=True, n_jobs=-1)
-    clf = RandomForestRegressor(n_estimators=128, random_state=0, max_depth=256, verbose=True, n_jobs=-1)
+    clf = RandomForestRegressor(n_estimators=64, random_state=0, max_depth=256, verbose=True, n_jobs=-1)
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     # train_data_score = clf.score(x_train, y_train) * 100 # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
