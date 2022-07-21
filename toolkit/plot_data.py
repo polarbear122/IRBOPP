@@ -27,7 +27,7 @@ def plot_pose_box_look_w_h(pose_box, annotation, is_look, video_id, keypoints):
 
 # 画出（左上角，右下角）格式的box
 def plot_pose_box_look(pose_box, annotation, is_look, video_id, keypoints):
-    img_file_path = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
+    img_file_path = jaad_img + video_id + "/"
     img = cv2.imread(img_file_path + annotation["@frame"] + ".jpg")
     img = draw_pose(img, pose_box, keypoints)
     xtl, ytl, xbr, ybr = round(pose_box[0]), round(pose_box[1]), round(pose_box[2]), round(pose_box[3])
@@ -87,34 +87,39 @@ def draw_pose(frame, bbox, human_keypoints):
     # Draw bboxes # xmin,xmax,ymin,ymax
     cv2.rectangle(img, (round(bbox[0]), round(bbox[1])), (round(bbox[2]), round(bbox[3])), color, 2)
 
-    # Draw keypoints
-    for n in range(kp_preds.shape[0]):
-        cor_x, cor_y = round(kp_preds[n, 0]), round(kp_preds[n, 1])
-        part_line[n] = (cor_x, cor_y)
-        if n < len(p_color):
-            cv2.circle(img, (cor_x, cor_y), 3, p_color[n], -1)
-        else:
-            cv2.circle(img, (cor_x, cor_y), 1, (255, 255, 255), 2)
-
-    # Draw limbs
-    for i, (start_p, end_p) in enumerate(l_pair):
-        if start_p in part_line and end_p in part_line:
-            start_xy = part_line[start_p]
-            end_xy = part_line[end_p]
-            cv2.line(img, start_xy, end_xy, line_color[i])
+    # # Draw keypoints
+    # for n in range(kp_preds.shape[0]):
+    #     cor_x, cor_y = round(kp_preds[n, 0]), round(kp_preds[n, 1])
+    #     part_line[n] = (cor_x, cor_y)
+    #     if n < len(p_color):
+    #         cv2.circle(img, (cor_x, cor_y), 3, p_color[n], -1)
+    #     else:
+    #         cv2.circle(img, (cor_x, cor_y), 1, (255, 255, 255), 2)
+    #
+    # # Draw limbs
+    # for i, (start_p, end_p) in enumerate(l_pair):
+    #     if start_p in part_line and end_p in part_line:
+    #         start_xy = part_line[start_p]
+    #         end_xy = part_line[end_p]
+    #         cv2.line(img, start_xy, end_xy, line_color[i])
     return img
 
 
 # 画出检测结果look/not-look,并与真实jaad数据集进行对比
 def plot_test_result():
-    video_st, video_end = 1, 347
+    video_st, video_end = 10, 347
     img_path = jaad_img + "/video_"
     data_path = "../train/halpe26_data/data_by_video/all_single/"
     # 经过训练后的模型的检测结果
-    trained_label = pd.read_csv("../train/y_pred_joint.csv", header=None, sep=',',
+    trained_label = pd.read_csv("../train/trained_model/video/Forest_image_y_pred.csv", header=None, sep=',',
                                 encoding='utf-8').values
     __st_id = 0
+
+    out = cv2.VideoWriter('../train/trained_model/test.avi', cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 30, (1920, 1080))
     for str_id in range(video_st, video_end):
+        # if str_id > 5:
+        #     out.release()
+        #     break
         try:
             pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
                                    encoding='utf-8').values
@@ -141,14 +146,16 @@ def plot_test_result():
                     is_look_p = "looking"
                 __st_id += 1
                 cv2.putText(img, is_look_t, (xtl, ytl), cv2.FONT_HERSHEY_SIMPLEX, 1, RED, 2)
-                wait_time = 10
+                wait_time = 1
                 # 当预测值与真值不同时，画出异常值
-                if is_look_t != is_look_p:
-                    cv2.putText(img, is_look_p, (xtl, ytl - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, YELLOW, 2)
-                    wait_time = 100
+                # if is_look_t != is_look_p:
+                #     cv2.putText(img, is_look_p, (xtl, ytl - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, YELLOW, 2)
+                #     wait_time = 1
+                out.write(img)
                 img = cv2.resize(img, (1920 // 2, 1080 // 2))
                 cv2.imshow("pose box looking", img)
                 cv2.waitKey(wait_time)
+
         except OSError:
             print("data or label ", str_id, "is not exist")
         else:

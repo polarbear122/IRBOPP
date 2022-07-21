@@ -5,7 +5,7 @@ import pandas as pd
 import scipy.io as scio
 
 import config
-from config import csv_data, train_data_list, test_data_list
+from config import csv_data, train_data_list, test_data_list, all_data_list
 
 
 # 读取有track的alpha pose的csv数据，带有idx
@@ -14,11 +14,21 @@ def read_data_track():
     data_path = csv_data
     label_path = csv_data
     # train_pose、test_pose会读取到87列数据
-    train_pose, train_label, train_video_length_list = normalize_read(data_path, data_path, train_data_list)
+    train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, train_data_list)
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
     train_norm_pose = normalize_all_point(train_pose[:, 4:86])  # 4是特征点开始，82为特征点结束，82:86为box
     test_norm_pose = normalize_all_point(test_pose[:, 4:86])
     return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
+
+
+# 测试时读取所有数据，不区分训练和测试
+def read_data_track_test():
+    data_path = csv_data
+    label_path = csv_data
+    # train_pose会读取到87列数据
+    all_pose, all_label, all_video_length_list = normalize_read(data_path, label_path, all_data_list)
+    all_norm_pose = normalize_all_point(all_pose[:, 4:86])  # 4是特征点开始，82为特征点结束，82:86为box
+    return all_norm_pose, all_label, all_video_length_list
 
 
 # 数据转换成stream后导出
@@ -26,11 +36,20 @@ def read_data_stream():
     data_path = csv_data
     label_path = csv_data
     # train_pose、test_pose会读取到87列数据
-    train_pose, train_label, train_video_length_list = normalize_read(data_path, data_path, train_data_list)
+    train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, train_data_list)
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
     train_norm_pose = norm_points_to_stream(train_pose)
     test_norm_pose = norm_points_to_stream(test_pose)
     return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
+
+
+# 测试时读取所有数据，不区分训练和测试
+def read_data_stream_test():
+    data_path = csv_data
+    label_path = csv_data
+    all_pose, all_label, all_video_length_list = normalize_read(data_path, label_path, all_data_list)
+    all_norm_pose = norm_points_to_stream(all_pose)  # 4是特征点开始，82为特征点结束，82:86为box
+    return all_norm_pose, all_label, all_video_length_list
 
 
 # 标准化读取数据集
@@ -159,7 +178,6 @@ def normalize_face_point(__pose_arr: np.array):
 
 # 正则化所有特征点，以0位置（鼻子）作为零点，所有脸部特征点减去该点坐标
 def normalize_all_point(__keypoints_arr: np.array):
-
     # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
     for __j in [1, 3, 5, 11, 13, 15, 17]:
         norm_x = __keypoints_arr[:, __j * 3] - __keypoints_arr[:, (__j + 1) * 3]
