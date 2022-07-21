@@ -1,3 +1,4 @@
+import pandas as pd
 from sklearn.metrics import roc_auc_score
 
 from log_config.log import logger
@@ -132,4 +133,8 @@ def calculate_all(y_true, y_predict):
 if __name__ == "__main__":
     y = [1, 1, 1, 1, 0]
     y_pre = [0, 1, 1, 1, 0]
-    calculate_all(y, y_pre)
+    video_label = pd.read_csv("../train/trained_model/video/Forest_image_y_pred.csv", header=None, sep=',',
+                              encoding='utf-8').values
+    image_label = pd.read_csv("../train/trained_model/image/Forest_image_y_pred.csv", header=None, sep=',',
+                              encoding='utf-8').values
+    calculate_all(video_label, image_label)

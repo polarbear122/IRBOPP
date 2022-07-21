@@ -71,7 +71,7 @@ if __name__ == "__main__":
     log.logger.info("测试联合分类器, 测试data大小(%d,%d),%d" %
                     (test_norm_pose.shape[0], test_norm_pose.shape[1], test_label.shape[0]))
     # 修改原始数据格式，图像级别检测的数据不需要改变，视频级别数据需要修改
-    forest_model = load_model("../train/trained_model/Forest_image_ml.model")
+    forest_model = load_model("../train/trained_model/Forest_image.model")
     sgd_model = load_model("../train/trained_model/SGD_image_ml.model")
     log.logger.info("video len list : %s" % len(test_video_length_list))
 
