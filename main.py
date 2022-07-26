@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 
+import config
 import train.test_joint_image_video as jo
 
 
@@ -90,13 +91,34 @@ def test_np_sort():
 
 
 # 生成随机数组
-def random_int_list(start, stop, length):
-    start, stop = (int(start), int(stop)) if start <= stop else (int(stop), int(start))
-    length = int(abs(length)) if length else 0
-    random_list = []
-    for i in range(length):
-        random_list.append(random.randint(start, stop))
-    return random_list[:207], random_list[207:]
+def random_int_list():
+    all_list = config.all_data_list
+    train_list = []
+    for i in range(207):
+        j = random.randint(0, len(all_list) - 1)
+        train_list.append(all_list[j])
+        del all_list[j]
+    test_list = all_list
+    print("train:", train_list)
+    print("test:", test_list)
+    return train_list, test_list
+
+
+# 校验随机的训练和测试数组是合适的
+def test_train_test_list():
+    train, test = config.train_data_list, config.test_data_list
+    for i in range(1, 347):
+        # if i in train:
+        #     print("train")
+        # if i in test:
+        #     print("test")
+        if i in train and i in test:
+            print("error")
+            break
+        if i not in train and i not in test:
+            print(i)
+            print("error:not in")
+            break
 
 
 # 测试numpy数组大小能否重新初始化
@@ -110,4 +132,4 @@ def numpy_arr_reshape():
 
 
 if __name__ == "__main__":
-    numpy_arr_reshape()
+    test_train_test_list()
