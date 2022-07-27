@@ -45,57 +45,17 @@ def sgd_trainer(x_train, x_test, y_train, y_test):
     return s
 
 
-def svm_trainer(x_train, x_test, y_train, y_test):
-    clf = svm.SVC(C=1, kernel='rbf', gamma=1, decision_function_shape='ovr')  # 设置训练器
-
-    x_train, y_train = data_resample.naive_random_under_sample(x_train, y_train)
-    x_train, y_train = data_resample.smote_sample(x_train, y_train)
-
-    clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
-    train_data_score = clf.score(x_train, y_train) * 100
-    test_data_score = clf.score(x_test, y_test) * 100
-    log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
-    y_pred = clf.predict(x_test)
-    cal.calculate_all(y_test, y_pred)  # 评估计算结果
-    s = pickle.dumps(clf)
-    return s
-
-
 def forest_trainer(x_train, x_test, y_train, y_test):
     # clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
     #                             min_samples_leaf=64, verbose=True, n_jobs=-1)
     clf = RandomForestClassifier(n_estimators=256, random_state=0, n_jobs=34)
-    for random_state in range(0, 1):
-        log.logger.info("random state:%d" % random_state)
-        clf = RandomForestClassifier(n_estimators=256, random_state=random_state, n_jobs=34)
-        # x_train, y_train = data_resample.adasyn(x_train, y_train)
-        clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
-        train_data_score = clf.score(x_train, y_train) * 100  # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
-        test_data_score = clf.score(x_test, y_test) * 100
-        log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
-        y_pred = clf.predict(x_test)
-        cal.calculate_all(y_test, y_pred)  # 评估计算结果
-    s = pickle.dumps(clf)
-    return s
-
-
-def forest_trainer_regressor(x_train, x_test, y_train, y_test):
-    # clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
-    #                             min_samples_leaf=64, verbose=True, n_jobs=-1)
-    clf = RandomForestRegressor(n_estimators=256, random_state=0, verbose=True, n_jobs=34)
-    for random_state in range(100):
-        log.logger.info("random state:%d" % random_state)
-        clf = RandomForestRegressor(n_estimators=256, random_state=random_state, verbose=True, n_jobs=34)
-        # x_train, y_train = data_resample.adasyn(x_train, y_train)
-        clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
-        y_pred = clf.predict(x_test)
-        y_p = np.zeros(len(y_pred))
-        for i in range(len(y_pred)):
-            if y_pred[i] < 0.5:
-                y_p[i] = 0
-            else:
-                y_p[i] = 1
-        cal.calculate_all(y_test, y_p)  # 评估计算结果
+    # x_train, y_train = data_resample.adasyn(x_train, y_train)
+    clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
+    train_data_score = clf.score(x_train, y_train) * 100  # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
+    test_data_score = clf.score(x_test, y_test) * 100
+    log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
+    y_pred = clf.predict(x_test)
+    cal.calculate_all(y_test, y_pred)  # 评估计算结果
     s = pickle.dumps(clf)
     return s
 
@@ -161,15 +121,14 @@ if __name__ == "__main__":
         = read_data.read_data_stream()
     print("test_norm_pose.shape:", test_norm_pose.shape)
     get_data_at = time.time()
-    name_list = ["SGD", "SVM", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
+    name_list = ["SGD", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
     train_model = {"SGD": sgd_trainer,
-                   "SVM": svm_trainer,
                    "Forest": forest_trainer,
                    "LinearSVC": linear_svc_trainer,
                    "LogisticRegression": logistic_regression,
                    "GradientBooting": gradient_booting
                    }
-    trainer = name_list[2]  # 选择训练器
+    trainer = name_list[1]  # 选择训练器
     log.logger.info("%s 多帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))
