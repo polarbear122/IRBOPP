@@ -84,20 +84,21 @@ def norm_points_to_stream(_pose_data: np.array):
         half_top_position_list.append(3 * i + 1 + 4)
         half_top_position_list.append(3 * i + 2 + 4)
     poses_arr = _pose_data[:, half_top_position_list + [0, 1, 2, 3, 82, 83, 84, 85]]  # 广义范围内的特征点
-    poses_arr = normalize_all_point(_pose_data[:, 4:86])
+    poses_arr = normalize_all_point(_pose_data[:, 4:86])  # 截取特征点和box
     pose_point_arr = _pose_data[:, 4:82]  # 狭义范围内的特征点
     box_arr = _pose_data[:, 82:86]
     label_arr = _pose_data[:, 86]
     pose_norm_stream = []
     for u in range(len(_pose_data)):
-        # 往前追溯5帧
+        # 往前追溯30帧
         pose_concat = poses_arr[u]
-        for i in range(4):
+        for i in range(5):
+            pre = u - i * 6 - 6  # 之前的帧，选择抽取一秒内的5帧，即30帧抽取5帧
             # 如果视频id不正确，或第u帧之前无图像，或者前面i帧的idx和第u帧的idx不一致，都只添加0矩阵
-            if v_id_arr[u - i - 1] != v_id_arr[u] or u - i - 1 <= 0 or idx_arr[u - i - 1] != idx_arr[u]:
+            if v_id_arr[pre] != v_id_arr[u] or pre <= 0 or idx_arr[pre] != idx_arr[u]:
                 pose_temp = np.zeros((len(poses_arr[u]),))
             else:
-                pose_temp = poses_arr[u - i - 1]
+                pose_temp = poses_arr[pre]
             pose_concat = np.concatenate((pose_concat, pose_temp), axis=0)
         pose_norm_stream.append(pose_concat)
     pose_norm_stream_mat = np.asarray(pose_norm_stream)
@@ -178,7 +179,7 @@ def normalize_face_point(__pose_arr: np.array):
 
 # 正则化所有特征点，以0位置（鼻子）作为零点，所有脸部特征点减去该点坐标
 def normalize_all_point(__keypoints_arr: np.array):
-    # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
+    # # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
     for __j in [1, 3, 5, 11, 13, 15, 17]:
         norm_x = __keypoints_arr[:, __j * 3] - __keypoints_arr[:, (__j + 1) * 3]
         norm_y = __keypoints_arr[:, __j * 3 + 1] - __keypoints_arr[:, (__j + 1) * 3 + 1]  # 特征点的y轴值

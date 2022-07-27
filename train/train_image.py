@@ -7,7 +7,7 @@ import time
 import numpy as np
 from sklearn import svm
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -61,22 +61,40 @@ def svm_trainer(x_train, x_test, y_train, y_test):
 
 
 def forest_trainer(x_train, x_test, y_train, y_test):
-    clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
-                                min_samples_leaf=64, verbose=True, n_jobs=-1)
-    clf = RandomForestRegressor(n_estimators=256, random_state=0, max_depth=256, verbose=True, n_jobs=-1)
+    # clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
+    #                             min_samples_leaf=64, verbose=True, n_jobs=-1)
+    clf = RandomForestClassifier()
+
+    # log.logger.info("random state:%d" % random_state)
+    clf = RandomForestClassifier(n_estimators=32, random_state=0, n_jobs=34)
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
-    # train_data_score = clf.score(x_train, y_train) * 100 # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
-    # test_data_score = clf.score(x_test, y_test) * 100
-    # log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
+    train_data_score = clf.score(x_train, y_train) * 100  # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
+    test_data_score = clf.score(x_test, y_test) * 100
+    log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
     y_pred = clf.predict(x_test)
-    y_p = np.zeros(len(y_pred))
-    for i in range(len(y_pred)):
-        if y_pred[i] < 0.5:
-            y_p[i] = 0
-        else:
-            y_p[i] = 1
-    cal.calculate_all(y_test, y_p)  # 评估计算结果
+    cal.calculate_all(y_test, y_pred)  # 评估计算结果
+    s = pickle.dumps(clf)
+    return s
+
+
+def forest_trainer_regressor(x_train, x_test, y_train, y_test):
+    # clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
+    #                             min_samples_leaf=64, verbose=True, n_jobs=-1)
+    clf = RandomForestRegressor(n_estimators=256, random_state=0, verbose=True, n_jobs=34)
+    for random_state in range(100):
+        log.logger.info("random state:%d" % random_state)
+        clf = RandomForestRegressor(n_estimators=256, random_state=random_state, verbose=True, n_jobs=34)
+        # x_train, y_train = data_resample.adasyn(x_train, y_train)
+        clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
+        y_pred = clf.predict(x_test)
+        y_p = np.zeros(len(y_pred))
+        for i in range(len(y_pred)):
+            if y_pred[i] < 0.5:
+                y_p[i] = 0
+            else:
+                y_p[i] = 1
+        cal.calculate_all(y_test, y_p)  # 评估计算结果
     s = pickle.dumps(clf)
     return s
 
@@ -141,7 +159,8 @@ if __name__ == "__main__":
     start_at = time.time()
     train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
         = read_data.read_data_track()
-    print("test_norm_pose.shape:", test_norm_pose.shape)
+    # print("test_norm_pose.shape:", test_norm_pose.shape)
+    # np.savetxt("test.csv", np.concatenate((train_label, test_label), axis=0), delimiter=',')
     get_data_at = time.time()
     name_list = ["SGD", "SVM", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
     train_model = {"SGD": sgd_trainer,
