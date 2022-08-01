@@ -94,7 +94,7 @@ def test_np_sort():
 def random_int_list():
     all_list = config.all_data_list
     train_list = []
-    for i in range(207):
+    for i in range(242):
         j = random.randint(0, len(all_list) - 1)
         train_list.append(all_list[j])
         del all_list[j]
@@ -132,4 +132,4 @@ def numpy_arr_reshape():
 
 
 if __name__ == "__main__":
-    test_train_test_list()
+    random_int_list()

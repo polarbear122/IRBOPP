@@ -47,20 +47,21 @@ def sgd_trainer(x_train, x_test, y_train, y_test):
 
 def forest_trainer(x_train, x_test, y_train, y_test):
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
-    # clf = RandomForestRegressor(n_estimators=36, max_depth=128, random_state=0, min_samples_split=8,
-    #                             min_samples_leaf=64, verbose=True, n_jobs=-1)
-    clf = RandomForestClassifier(n_estimators=32, random_state=0, n_jobs=34)
-
-    # 使用交叉验证
-    kfold = KFold(n_splits=5)
-    for train_index, test_index in kfold.split(x_train, y_train):
-        # train_index 就是分类的训练集的下标，test_index 就是分配的验证集的下标
-        this_train_x, this_train_y = x_train[train_index], y_train[train_index]  # 本组训练集
-        this_test_x, this_test_y = x_train[test_index], y_train[test_index]  # 本组验证集
-        # 训练本组的数据，并计算准确率
-        clf.fit(this_train_x, this_train_y.ravel())
-        prediction = clf.predict(this_test_x)
-        cal.calculate_all(this_test_y, prediction)  # 评估计算结果
+    clf = RandomForestClassifier(n_estimators=64, max_depth=128, random_state=0, min_samples_split=2,
+                                 min_samples_leaf=16, verbose=False, n_jobs=34)
+    # clf = RandomForestClassifier(n_estimators=32, max_depth=128,random_state=0, n_jobs=34)
+    # x_train, y_train = data_resample.smote_sample(x_train, y_train)
+    clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
+    # # 使用交叉验证
+    # kfold = KFold(n_splits=5)
+    # for train_index, test_index in kfold.split(x_train, y_train):
+    #     # train_index 就是分类的训练集的下标，test_index 就是分配的验证集的下标
+    #     this_train_x, this_train_y = x_train[train_index], y_train[train_index]  # 本组训练集
+    #     this_test_x, this_test_y = x_train[test_index], y_train[test_index]  # 本组验证集
+    #     # 训练本组的数据，并计算准确率
+    #     clf.fit(this_train_x, this_train_y.ravel())
+    #     prediction = clf.predict(this_test_x)
+    #     cal.calculate_all(this_test_y, prediction)  # 评估计算结果
     train_data_score = clf.score(x_train, y_train) * 100  # 随机森林法训练结果存在问题，输出是0-1的浮点数，不是0和1
     test_data_score = clf.score(x_test, y_test) * 100
     log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
@@ -130,7 +131,10 @@ if __name__ == "__main__":
     start_at = time.time()
     train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
         = read_data.read_data_track()
-    # print("train_norm_pose.shape:", train_norm_pose.shape)
+    print("train_norm_pose.shape:", train_norm_pose.shape)
+    print("train label sum", train_label.sum())
+    print("test_norm_pose.shape:", test_norm_pose.shape)
+    print("test label sum:", test_label.sum())
     # np.savetxt("label_all.csv", np.concatenate((train_label, test_label), axis=0), delimiter=',')
 
     get_data_at = time.time()
@@ -141,7 +145,7 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting": gradient_booting
                    }
-    trainer = name_list[3]  # 选择训练器
+    trainer = name_list[1]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))

@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 import pandas as pd
 # from train.test_joint_image_video import calculate_result
-# python 需要import自己的目录，如何加这个目录
 from config import jaad_img
 
 RED = (0, 0, 255)
@@ -110,12 +109,15 @@ def plot_test_result():
     video_st, video_end = 10, 347
     img_path = jaad_img + "/video_"
     data_path = "../train/halpe26_data/data_by_video/all_single/"
+    vehicle_path = "../analysis_pedestrian/data/"
+    vehicle_dict = {0: 'stopped', 1: 'moving_slow', 2: 'moving_fast', 3: 'decelerating', 4: 'accelerating'}
     # 经过训练后的模型的检测结果
     trained_label = pd.read_csv("../train/trained_model/video/Forest_image_y_pred.csv", header=None, sep=',',
                                 encoding='utf-8').values
     __st_id = 0
 
-    out = cv2.VideoWriter('../train/trained_model/test.avi', cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 30, (1920, 1080))
+    out = cv2.VideoWriter('../train/trained_model/test.avi', cv2.VideoWriter_fourcc('M', 'P', '4', '2'), 30,
+                          (1920, 1080))
     for str_id in range(video_st, video_end):
         # if str_id > 5:
         #     out.release()
@@ -123,6 +125,8 @@ def plot_test_result():
         try:
             pose_arr = pd.read_csv(data_path + "data" + str(str_id) + ".csv", header=None, sep=',',
                                    encoding='utf-8').values
+            vehicle = pd.read_csv(vehicle_path + "data" + str(str_id) + ".csv", header=None, sep=',',
+                                  encoding='utf-8').values
             print(str_id, "shape:", pose_arr.shape)
             for __i in range(len(pose_arr)):
                 pose = pose_arr[__i]
@@ -146,11 +150,14 @@ def plot_test_result():
                     is_look_p = "looking"
                 __st_id += 1
                 cv2.putText(img, is_look_t, (xtl, ytl), cv2.FONT_HERSHEY_SIMPLEX, 1, RED, 2)
+                print(vehicle[int(img_frame_id)][2])
+                vehicle_action = vehicle_dict[vehicle[int(img_frame_id)][2]]
+                cv2.putText(img, vehicle_action, (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 3, RED, 2)
                 wait_time = 1
                 # 当预测值与真值不同时，画出异常值
-                # if is_look_t != is_look_p:
-                #     cv2.putText(img, is_look_p, (xtl, ytl - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, YELLOW, 2)
-                #     wait_time = 1
+                if is_look_t != is_look_p:
+                    cv2.putText(img, is_look_p, (xtl, ytl - 20), cv2.FONT_HERSHEY_SIMPLEX, 1, YELLOW, 2)
+                    wait_time = 1
                 out.write(img)
                 img = cv2.resize(img, (1920 // 2, 1080 // 2))
                 cv2.imshow("pose box looking", img)
