@@ -94,7 +94,7 @@ def test_np_sort():
 def random_int_list():
     all_list = config.all_data_list
     train_list = []
-    for i in range(207):
+    for i in range(242):
         j = random.randint(0, len(all_list) - 1)
         train_list.append(all_list[j])
         del all_list[j]
@@ -106,16 +106,12 @@ def random_int_list():
 
 # 校验随机的训练和测试数组是合适的
 def test_train_test_list():
-    train, test = config.train_data_list, config.test_data_list
+    train, test, val = config.jaad_all_videos_train, config.jaad_all_videos_test, config.jaad_all_videos_val
     for i in range(1, 347):
-        # if i in train:
-        #     print("train")
-        # if i in test:
-        #     print("test")
-        if i in train and i in test:
+        if i in train and i in test or i in train and i in val or i in test and i in val:
             print("error")
             break
-        if i not in train and i not in test:
+        if i not in train and i not in test and i not in val:
             print(i)
             print("error:not in")
             break
@@ -129,6 +125,20 @@ def numpy_arr_reshape():
     print(num1)
     num1 = np.zeros((1, 2))
     print(num1)
+
+
+# 从jaad数据集中解析出train、val、test数据
+def get_txt_file_to_num():
+    file_path = "D:/CodeResp/JAAD-JAAD_2.0/split_ids/all_videos/"
+    name = "test.txt"
+    file = file_path + name
+    num_list = []
+    with open(file, "r", encoding='utf-8') as f:
+        for line in f:
+            if line:
+                num = int(line.split("_")[1])
+                num_list.append(num)
+    print("jaad_all_videos_test = ", num_list)
 
 
 if __name__ == "__main__":
