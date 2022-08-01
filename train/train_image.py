@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.model_selection import KFold
 import calculate.calculate as cal
 import toolkit.data_resample as data_resample
@@ -47,8 +47,8 @@ def sgd_trainer(x_train, x_test, y_train, y_test):
 
 def forest_trainer(x_train, x_test, y_train, y_test):
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
-    clf = RandomForestClassifier(n_estimators=64, max_depth=128, random_state=0, min_samples_split=2,
-                                 min_samples_leaf=16, verbose=False, n_jobs=34)
+    clf = RandomForestClassifier(n_estimators=64, max_depth=64, random_state=0,
+                                 min_samples_leaf=16, n_jobs=34)
     # clf = RandomForestClassifier(n_estimators=32, max_depth=128,random_state=0, n_jobs=34)
     # x_train, y_train = data_resample.smote_sample(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
@@ -136,7 +136,10 @@ if __name__ == "__main__":
     print("test_norm_pose.shape:", test_norm_pose.shape)
     print("test label sum:", test_label.sum())
     # np.savetxt("label_all.csv", np.concatenate((train_label, test_label), axis=0), delimiter=',')
-
+    pose_all = np.concatenate((train_norm_pose, test_norm_pose), axis=0)
+    label_all = np.concatenate((train_label, test_label), axis=0)
+    train_norm_pose, test_norm_pose, train_label, test_label, = train_test_split(pose_all, label_all, test_size=0.3,
+                                                                                 random_state=0)
     get_data_at = time.time()
     name_list = ["SGD", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
     train_model = {"SGD": sgd_trainer,

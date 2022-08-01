@@ -97,13 +97,19 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
                 elif pose["image_id"] == str(int(annotation["@frame"]) + 1) + ".jpg":
                     break
             is_look = annotation["attribute"][2]["#text"]
-            pose_in_img = max_pose_box and 0 < max_pose_box[0] < 1920 and 0 < max_pose_box[1] < 1080 and 0 < max_pose_box[2] < 1920 and 0 < max_pose_box[3] < 1080
+            is_cross = annotation["attribute"][5]["#text"]
+            pose_in_img = max_pose_box and 0 < max_pose_box[0] < 1920 and 0 < max_pose_box[1] < 1080 and 0 < \
+                          max_pose_box[2] < 1920 and 0 < max_pose_box[3] < 1080
             if x_keypoints_proposal and max_iou > max_iou_threshold and pose_in_img:
                 label = 0
                 if is_look == "looking":
                     label = 1
+                label_cross = 1
+                if is_cross == "not-crossing":
+                    label_cross = 0
                 x.append(
-                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
+                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label] + [
+                        label_cross])
                 uuid += 1
                 need_plot = False
                 if need_plot and pose_box and max_iou > max_iou_threshold:
@@ -138,8 +144,8 @@ def get_init_data():
             video_count += 1
             x_array = np_sort(np.asarray(x))
             y_array = x_array[:, -1]
-            np.savetxt("../train/halpe26_reid/data" + str(i) + ".csv", x_array, delimiter=',')
-            np.savetxt("../train/halpe26_reid/label" + str(i) + ".csv", y_array, delimiter=',')
+            np.savetxt("../cross/data/data" + str(i) + ".csv", x_array, delimiter=',')
+            np.savetxt("../cross/data/label" + str(i) + ".csv", y_array, delimiter=',')
     return video_count
 
 
