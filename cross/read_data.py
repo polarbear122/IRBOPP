@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import scipy.io as scio
 
-from config import cross_csv, jaad_all_videos_train,jaad_all_videos_val
+from config import cross_csv, jaad_all_videos_train, jaad_all_videos_val
 
 
 def read_data_track():
@@ -12,10 +12,16 @@ def read_data_track():
     label_path = cross_csv
     # train_pose、test_pose会读取到87列数据
     # train_data_list, test_data_list = random_int_list()
-
-    train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, jaad_all_videos_train)
-    test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, jaad_all_videos_val)
-    train_norm_pose = normalize_all_point(train_pose[:, 4:86])  # 4是特征点开始，82为特征点结束，82:86为box
+    l1, l2 = [], []
+    for i in range(1, 347):
+        if i < 266:
+            l1.append(i)
+        else:
+            l2.append(i)
+    train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, l1)
+    test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, l2)
+    # 4是特征点开始，11为第一个腿部特征点，82为特征点结束，82:86为box
+    train_norm_pose = normalize_all_point(train_pose[:, 4:86])
     test_norm_pose = normalize_all_point(test_pose[:, 4:86])
 
     return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
@@ -44,17 +50,52 @@ def normalize_read(data_path: str, label_path: str, _data_list: list):
 
 
 # 正则化所有特征点，以0位置（鼻子）作为零点，所有脸部特征点减去该点坐标
-def normalize_all_point(__keypoints_arr: np.array):
+def normalize_all_point(_keypoints_arr: np.array):
     # # # 脸部特征点1-2，3-4，5-6，额头17-18，腿部11-12，13-14，15-16，两两相减
     # for __j in [1, 3, 5, 11, 13, 15, 17]:
     #     norm_x = __keypoints_arr[:, __j * 3] - __keypoints_arr[:, (__j + 1) * 3]
     #     norm_y = __keypoints_arr[:, __j * 3 + 1] - __keypoints_arr[:, (__j + 1) * 3 + 1]  # 特征点的y轴值
     #     __keypoints_arr = np.concatenate((__keypoints_arr, norm_x.reshape(-1, 1)), axis=1)
     #     __keypoints_arr = np.concatenate((__keypoints_arr, norm_y.reshape(-1, 1)), axis=1)
-    # 所有特征点再减去0位置鼻子处的特征点(x,y)
-    for __i in range(1, 26):
-        __keypoints_arr[:, __i * 3] -= __keypoints_arr[:, 0]
-        __keypoints_arr[:, __i * 3 + 1] -= __keypoints_arr[:, 1]
-    # __pose_array = __pose_array[:, [0, 1, 2, 3, 4, 5, 6, 17, 18, 78, 79, 80, 81]]
+    # 所有特征点再减去19位置的特征点(x,y)
+    for _i in range(27):
+        if _i != 19:
+            _keypoints_arr[:, _i * 3] -= _keypoints_arr[:, 8 * 3]
+            _keypoints_arr[:, _i * 3 + 1] -= _keypoints_arr[:, 8 * 3 + 1]
+    # angle 5-7,7-9;6-8,8-10;12-14,14-16;11-13,13-15;12-16,11-15;
+    # distance:21-23,20-22,21-25,20-24,11-12,13-14,15-16;
+    out_put = np.zeros((len(_keypoints_arr), 15))
+    # 先获取bound box
+    for _i in range(4):
+        out_put[_i] = _keypoints_arr[78 + _i]
+    angle_pair_list = [[5, 7, 7, 9], [6, 8, 8, 10], [6, 10, 5, 9], [11, 13, 13, 15], [12, 14, 14, 16],
+                       [12.16, 11, 15]]
+    distance_pair_list = [[21, 23], [20, 22], [21, 25], [20, 24], [11, 12], [13, 14], [15, 16]]
 
-    return __keypoints_arr
+    return _keypoints_arr
+
+
+"""
+l1_arr = np.array([[1, 0],
+                  [0, 1],
+                  [0, 5],
+                  [-1, 0]])
+l2_arr = np.array([[1, 0],
+                  [1, 1],
+                  [0, 1],
+                  [5, 0]])
+result = angle_row_wise_v2(l1_arr, l2_arr)
+print(result)
+"""
+
+
+# 计算夹角
+def angle_row_wise_v2(l1_arr, l2_arr):
+    p1 = np.einsum('ij,ij->i', l1_arr, l2_arr)
+    p2 = np.einsum('ij,ij->i', l1_arr, l1_arr)
+    p3 = np.einsum('ij,ij->i', l2_arr, l2_arr)
+    # p4 = p1 / np.sqrt(p2 * p3)
+    a = p1
+    b = np.sqrt(p2 * p3)
+    p4 = np.divide(a, b, out=np.zeros_like(b), where=b != 0)
+    return np.arccos(np.clip(p4, -1.0, 1.0))

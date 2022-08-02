@@ -50,8 +50,9 @@ def forest_trainer(x_train, x_test, y_train, y_test):
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     # clf = RandomForestClassifier(n_estimators=64, max_depth=128, random_state=0, min_samples_split=2,
     #                              min_samples_leaf=16, verbose=False, n_jobs=34)
-    clf = RandomForestClassifier(n_estimators=32, max_depth=32, random_state=0, min_samples_leaf=32, max_features=16,
-                                 n_jobs=34)
+    # clf = RandomForestClassifier(n_estimators=100, max_depth=6, random_state=0, verbose=True,
+    #                              n_jobs=34)
+    clf = RandomForestClassifier(n_jobs=7)
     # x_train, y_train = data_resample.smote_sample(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     # # 使用交叉验证
@@ -133,15 +134,15 @@ if __name__ == "__main__":
     start_at = time.time()
     train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
         = read_data_track()
-    print("train_norm_pose.shape:", train_norm_pose.shape)
-    print("train label sum", train_label.sum())
-    print("test_norm_pose.shape:", test_norm_pose.shape)
-    print("test label sum:", test_label.sum())
     # np.savetxt("label_all.csv", np.concatenate((train_label, test_label), axis=0), delimiter=',')
     # pose_all = np.concatenate((train_norm_pose, test_norm_pose), axis=0)
     # label_all = np.concatenate((train_label, test_label), axis=0)
     # train_norm_pose, test_norm_pose, train_label, test_label, = train_test_split(pose_all, label_all, test_size=0.3,
     #                                                                              random_state=0)
+    print("train_norm_pose.shape:", train_norm_pose.shape)
+    print("train label sum", train_label.sum())
+    print("test_norm_pose.shape:", test_norm_pose.shape)
+    print("test label sum:", test_label.sum())
     get_data_at = time.time()
     name_list = ["SGD", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
     train_model = {"SGD": sgd_trainer,

@@ -18,9 +18,14 @@ def read_data_track():
     label_path = csv_data
     # train_pose、test_pose会读取到87列数据
     # train_data_list, test_data_list = random_int_list()
-
-    train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, train_data_list)
-    test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, test_data_list)
+    l1, l2 = [], []
+    for i in range(1, 347):
+        if i < 266:
+            l1.append(i)
+        else:
+            l2.append(i)
+    train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, l1)
+    test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, l2)
     train_norm_pose = normalize_all_point(train_pose[:, 4:86])  # 4是特征点开始，82为特征点结束，82:86为box
     test_norm_pose = normalize_all_point(test_pose[:, 4:86])
     return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list

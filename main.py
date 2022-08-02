@@ -141,5 +141,24 @@ def get_txt_file_to_num():
     print("jaad_all_videos_test = ", num_list)
 
 
+def angle_row_wise_v2(l1_arr, l2_arr):
+    p1 = np.einsum('ij,ij->i', l1_arr, l2_arr)
+    p2 = np.einsum('ij,ij->i', l1_arr, l1_arr)
+    p3 = np.einsum('ij,ij->i', l2_arr, l2_arr)
+    p4 = p1 / np.sqrt(p2 * p3)
+    return np.arccos(np.clip(p4, -1.0, 1.0))
+
+
 if __name__ == "__main__":
-    test_train_test_list()
+    A = np.array([[1, 0],
+                  [0, 1],
+                  [0, 5],
+                  [-1, 0]])
+
+    B = np.array([[1, 0],
+                  [1, 1],
+                  [0, 1],
+                  [5, 0]])
+
+    result = angle_row_wise_v2(A, B)
+    print(result)

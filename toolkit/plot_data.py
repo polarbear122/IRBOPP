@@ -80,6 +80,8 @@ def draw_pose(frame, bbox, human_keypoints):
                       (77, 222, 255), (255, 156, 127),
                       (0, 127, 255), (255, 127, 77), (0, 77, 255), (255, 77, 36)]
     img = frame.copy()
+    img = np.zeros([img.shape[1], img.shape[0], 3], np.uint8)
+
     part_line = {}
     kp_preds = np.array(human_keypoints).reshape(-1, 3)
     color = RED
@@ -87,26 +89,28 @@ def draw_pose(frame, bbox, human_keypoints):
     cv2.rectangle(img, (round(bbox[0]), round(bbox[1])), (round(bbox[2]), round(bbox[3])), color, 2)
 
     # # Draw keypoints
-    # for n in range(kp_preds.shape[0]):
-    #     cor_x, cor_y = round(kp_preds[n, 0]), round(kp_preds[n, 1])
-    #     part_line[n] = (cor_x, cor_y)
-    #     if n < len(p_color):
-    #         cv2.circle(img, (cor_x, cor_y), 3, p_color[n], -1)
-    #     else:
-    #         cv2.circle(img, (cor_x, cor_y), 1, (255, 255, 255), 2)
-    #
-    # # Draw limbs
-    # for i, (start_p, end_p) in enumerate(l_pair):
-    #     if start_p in part_line and end_p in part_line:
-    #         start_xy = part_line[start_p]
-    #         end_xy = part_line[end_p]
-    #         cv2.line(img, start_xy, end_xy, line_color[i])
+    for n in range(kp_preds.shape[0]):
+        cor_x, cor_y = round(kp_preds[n, 0]), round(kp_preds[n, 1])
+        part_line[n] = (cor_x, cor_y)
+        if n < len(p_color):
+            cv2.circle(img, (cor_x, cor_y), 3, p_color[n], -1)
+        else:
+            cv2.circle(img, (cor_x, cor_y), 1, (255, 255, 255), 2)
+
+    # Draw limbs
+    for i, (start_p, end_p) in enumerate(l_pair):
+        if start_p in part_line and end_p in part_line:
+            start_xy = part_line[start_p]
+            end_xy = part_line[end_p]
+            cv2.line(img, start_xy, end_xy, line_color[i])
+    cv2.imwrite("test1.jpg",img)
+
     return img
 
 
 # 画出检测结果look/not-look,并与真实jaad数据集进行对比
 def plot_test_result():
-    video_st, video_end = 10, 347
+    video_st, video_end = 2, 3
     img_path = jaad_img + "/video_"
     data_path = "../train/halpe26_data/data_by_video/all_single/"
     vehicle_path = "../analysis_pedestrian/data/"

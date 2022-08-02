@@ -136,10 +136,10 @@ if __name__ == "__main__":
     print("test_norm_pose.shape:", test_norm_pose.shape)
     print("test label sum:", test_label.sum())
     # np.savetxt("label_all.csv", np.concatenate((train_label, test_label), axis=0), delimiter=',')
-    pose_all = np.concatenate((train_norm_pose, test_norm_pose), axis=0)
-    label_all = np.concatenate((train_label, test_label), axis=0)
-    train_norm_pose, test_norm_pose, train_label, test_label, = train_test_split(pose_all, label_all, test_size=0.3,
-                                                                                 random_state=0)
+    # pose_all = np.concatenate((train_norm_pose, test_norm_pose), axis=0)
+    # label_all = np.concatenate((train_label, test_label), axis=0)
+    # train_norm_pose, test_norm_pose, train_label, test_label, = train_test_split(pose_all, label_all, test_size=0.3,
+    #                                                                              random_state=0)
     get_data_at = time.time()
     name_list = ["SGD", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
     train_model = {"SGD": sgd_trainer,

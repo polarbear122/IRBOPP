@@ -37,18 +37,18 @@ def generate_predict_data():
                 count_arr[_j] += 1
     print(count_arr)
     for _i in range(len(vehicle_behavior)):
-        if vehicle_behavior[_i] == 1 or vehicle_behavior[_i] == 3or vehicle_behavior[_i] == 4:
+        if vehicle_behavior[_i] == 1 or vehicle_behavior[_i] == 3 or vehicle_behavior[_i] == 4:
             vehicle_behavior[_i] = 0
-        elif vehicle_behavior[_i] == 2 :
+        elif vehicle_behavior[_i] == 2:
             vehicle_behavior[_i] = 1
     print(vehicle_behavior.sum(), len(vehicle_behavior))
     no_look_predict = cross_label
 
     look_predict = np.zeros((len(cross_label),))
     for _i in range(15, len(cross_label)):
-        if look_label[_i-15] == 0 and cross_label[_i-15] == 1:
+        if look_label[_i - 15] == 0 and cross_label[_i - 15] == 1:
             look_predict[_i] = 0
-        elif look_label[_i-10] == 1 and cross_label[_i-10] == 0:
+        elif look_label[_i - 10] == 1 and cross_label[_i - 10] == 0:
             look_predict[_i] = 1
         else:
             look_predict[_i] = cross_label[_i]
