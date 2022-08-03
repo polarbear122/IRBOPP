@@ -55,8 +55,9 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
         track_box = [annotations["track"]]
     else:
         track_box = annotations["track"]
-    vehicle = pd.read_csv(config.IRBOPP + "analysis_pedestrian/data/" + "data" + str(video_id) + ".csv", header=None,
-                          sep=',', encoding='utf-8')
+    vehicle = pd.read_csv(config.IRBOPP + "analysis_pedestrian/data/" + "data" + str(int_video_id) + ".csv",
+                          header=None,
+                          sep=',', encoding='utf-8').values
     is_repeat = 0
     # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  # 设置输出视频为mp4格式 cap_fps, size = 30, (1920,1080)
     # size（width，height）
@@ -74,7 +75,7 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
             xbr, ybr = str_to_int(annotation["@xbr"]), str_to_int(annotation["@ybr"])
             # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
             if xtl <= 0 or ytl <= 0 or (xbr - xtl) <= 0 or (ybr - ytl) <= 0:
-                print(annotation)
+                # print(annotation)
                 continue
             max_iou = max_iou_threshold = 0.6
             pose_box = []  # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
@@ -111,16 +112,14 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
                 if is_cross == "not-crossing":
                     label_cross = 0
                 vehicle_behaviour = 0
-                for analysis_ped in vehicle:
-                    if analysis_ped[1] == img_frame_id:
-                        vehicle_behaviour = analysis_ped[2]
-                    else:
-                        print("error")
-                        exit(1)
+                for _i in range(len(vehicle)):
+                    if vehicle[_i][1] == img_frame_id:
+                        vehicle_behaviour = vehicle[_i][2]
+                    elif vehicle[_i][1] > img_frame_id:
+                        break
                 x.append(
                     [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [
-                        label] + [] + [
-                        label_cross])
+                        label] + [vehicle_behaviour] + [label_cross])
                 uuid += 1
                 need_plot = False
                 if need_plot and pose_box and max_iou > max_iou_threshold:
@@ -153,7 +152,7 @@ def get_init_data():
         if x.shape[1] > 1:
             uuid += x.shape[0]
             video_count += 1
-            x_array = np_sort(np.sarray(x))
+            x_array = np_sort(np.asarray(x))
             y_array = x_array[:, -1]
             np.savetxt("../cross/data/data" + str(i) + ".csv", x_array, delimiter=',')
             np.savetxt("../cross/data/label" + str(i) + ".csv", y_array, delimiter=',')

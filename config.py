@@ -1,13 +1,13 @@
-csv_data = "D:/CodeResp/IRBOPP/train/halpe26_reid/"
-jaad_clip = "E:/CodeResp/pycode/DataSet/JAAD_clips/"
-jaad_img = "E:/CodeResp/pycode/DataSet/JAAD_image/"
-jaad_anno = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/"
-jaad_vehicle = "D:/CodeResp/jaad_data/JAAD/annotations_vehicle/"
+IRBOPP = "D:/CodeResp/IRBOPP/"
+csv_data = IRBOPP + "train/halpe26_reid/"
+jaad_clip = "D:/CodeResp/jaad_data/JAAD_clips/"
+jaad_img = "D:/CodeResp/jaad_data/JAAD_image/"
+jaad_anno = "D:/CodeResp/JAAD-JAAD_2.0/annotations/"
+jaad_vehicle = "D:/CodeResp/JAAD-JAAD_2.0/annotations_vehicle/"
 alpha_pose = "D:/CodeResp/jaad_data/AlphaReidResultNoFast/"
 img_save_patch = "C:/datasetzyf/jaad_patch/video_"
 dataset_root = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070/"
-IRBOPP = "D:/CodeResp/IRBOPP/"
-cross_csv = "D:/CodeResp/IRBOPP/cross/data/"
+cross_csv = IRBOPP + "cross/data/"
 
 face_position = [0, 1, 2, 3, 4]  # 脸部特征点位置
 head_position = [0, 1, 2, 3, 4, 17, 18]  # 头部特征点位置
