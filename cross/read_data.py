@@ -58,21 +58,44 @@ def normalize_all_point(_keypoints_arr: np.array):
     #     __keypoints_arr = np.concatenate((__keypoints_arr, norm_x.reshape(-1, 1)), axis=1)
     #     __keypoints_arr = np.concatenate((__keypoints_arr, norm_y.reshape(-1, 1)), axis=1)
     # 所有特征点再减去19位置的特征点(x,y)
+    zero_position = 19
     for _i in range(27):
-        if _i != 19:
-            _keypoints_arr[:, _i * 3] -= _keypoints_arr[:, 8 * 3]
-            _keypoints_arr[:, _i * 3 + 1] -= _keypoints_arr[:, 8 * 3 + 1]
+        if _i != zero_position:
+            _keypoints_arr[:, _i * 3] -= _keypoints_arr[:, zero_position * 3]
+            _keypoints_arr[:, _i * 3 + 1] -= _keypoints_arr[:, zero_position * 3 + 1]
     # angle 5-7,7-9;6-8,8-10;12-14,14-16;11-13,13-15;12-16,11-15;
     # distance:21-23,20-22,21-25,20-24,11-12,13-14,15-16;
-    out_put = np.zeros((len(_keypoints_arr), 15))
+    print(len(_keypoints_arr))
+    out_put = np.zeros((len(_keypoints_arr), 4))
     # 先获取bound box
     for _i in range(4):
-        out_put[_i] = _keypoints_arr[78 + _i]
+        out_put[:, _i] = _keypoints_arr[:, 78 + _i]
     angle_pair_list = [[5, 7, 7, 9], [6, 8, 8, 10], [6, 10, 5, 9], [11, 13, 13, 15], [12, 14, 14, 16],
-                       [12.16, 11, 15]]
+                       [12, 16, 11, 15]]
     distance_pair_list = [[21, 23], [20, 22], [21, 25], [20, 24], [11, 12], [13, 14], [15, 16]]
+    for _i in range(len(angle_pair_list)):
+        angle_pair = angle_pair_list[_i]  # 取出一对直线
+        line1 = keypoints_line(_keypoints_arr, angle_pair[0], angle_pair[1])
+        line2 = keypoints_line(_keypoints_arr, angle_pair[2], angle_pair[3])
+        angle = angle_row_wise_v2(line1, line2)
+        out_put = np.concatenate((out_put, angle), axis=1)
+    for _i in range(len(distance_pair_list)):
+        distance_pair = distance_pair_list[_i]
+        dx, dy = keypoints_distance(_keypoints_arr, distance_pair[0], distance_pair[1])
+        out_put = np.concatenate((out_put, dx, dy), axis=1)
+    return out_put
 
-    return _keypoints_arr
+
+def keypoints_line(keypoints, position1, position2):
+    x = (keypoints[:, position1 * 3] - keypoints[:, position2 * 3]).reshape((-1, 1))
+    y = (keypoints[:, position1 * 3 + 1] - keypoints[:, position2 * 3 + 1]).reshape((-1, 1))
+    return np.concatenate((x, y), axis=1)
+
+
+def keypoints_distance(keypoints, position1, position2):
+    dx = keypoints[:, position1 * 3] - keypoints[:, position2 * 3]
+    dy = keypoints[:, position1 * 3 + 1] - keypoints[:, position2 * 3 + 1]
+    return dx.reshape((-1, 1)), dy.reshape((-1, 1))
 
 
 """
@@ -98,4 +121,4 @@ def angle_row_wise_v2(l1_arr, l2_arr):
     a = p1
     b = np.sqrt(p2 * p3)
     p4 = np.divide(a, b, out=np.zeros_like(b), where=b != 0)
-    return np.arccos(np.clip(p4, -1.0, 1.0))
+    return np.arccos(np.clip(p4, -1.0, 1.0)).reshape((-1, 1))

@@ -50,9 +50,9 @@ def forest_trainer(x_train, x_test, y_train, y_test):
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
     # clf = RandomForestClassifier(n_estimators=64, max_depth=128, random_state=0, min_samples_split=2,
     #                              min_samples_leaf=16, verbose=False, n_jobs=34)
-    # clf = RandomForestClassifier(n_estimators=100, max_depth=6, random_state=0, verbose=True,
-    #                              n_jobs=34)
-    clf = RandomForestClassifier(n_jobs=7)
+    clf = RandomForestClassifier(n_estimators=100, max_depth=12, random_state=0, verbose=True,
+                                 n_jobs=34)
+    # clf = RandomForestClassifier(n_jobs=7)
     # x_train, y_train = data_resample.smote_sample(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     # # 使用交叉验证

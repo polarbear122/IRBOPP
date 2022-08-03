@@ -4,10 +4,12 @@
 """
 # 提供读取数据的方法
 # 从alpha pose的检测结果和jaad的注释文件中读取keypoints和对应img id，保存结果为csv文件
-
+import pandas as pd
 
 import cv2
 import numpy as np
+
+import config
 from toolkit.read_pose_data import read_json
 from toolkit.tool import xml_read, str_to_int
 from toolkit.read_data import normalize_face_point_stream
@@ -53,7 +55,8 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
         track_box = [annotations["track"]]
     else:
         track_box = annotations["track"]
-
+    vehicle = pd.read_csv(config.IRBOPP + "analysis_pedestrian/data/" + "data" + str(video_id) + ".csv", header=None,
+                          sep=',', encoding='utf-8')
     is_repeat = 0
     # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  # 设置输出视频为mp4格式 cap_fps, size = 30, (1920,1080)
     # size（width，height）
@@ -107,8 +110,16 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
                 label_cross = 1
                 if is_cross == "not-crossing":
                     label_cross = 0
+                vehicle_behaviour = 0
+                for analysis_ped in vehicle:
+                    if analysis_ped[1] == img_frame_id:
+                        vehicle_behaviour = analysis_ped[2]
+                    else:
+                        print("error")
+                        exit(1)
                 x.append(
-                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label] + [
+                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [
+                        label] + [] + [
                         label_cross])
                 uuid += 1
                 need_plot = False
@@ -130,8 +141,8 @@ def np_sort(n_arr: np.array):
 
 def get_init_data():
     video_count = 0  # 计算有多少个视频是有效的
-    xml_anno = "D:/codeResp/jaad_data/JAAD/annotations/"
-    alpha_pose = "D:/codeResp/jaad_data/AlphaReidResultNoFast/"
+    xml_anno = config.jaad_anno
+    alpha_pose = config.alpha_pose
     uuid = 0
     for i in range(1, 347):
         video_id_name = "video_" + str(i).zfill(4)
@@ -142,7 +153,7 @@ def get_init_data():
         if x.shape[1] > 1:
             uuid += x.shape[0]
             video_count += 1
-            x_array = np_sort(np.asarray(x))
+            x_array = np_sort(np.sarray(x))
             y_array = x_array[:, -1]
             np.savetxt("../cross/data/data" + str(i) + ".csv", x_array, delimiter=',')
             np.savetxt("../cross/data/label" + str(i) + ".csv", y_array, delimiter=',')
