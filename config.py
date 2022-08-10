@@ -1,13 +1,20 @@
 IRBOPP = "D:/CodeResp/IRBOPP/"
+jaad_result = "D:/CodeResp/jaad_data/"
+img_save_path = "C:/datasetzyf/"
+jaad_anno_path = "D:/CodeResp/JAAD-JAAD_2.0/"
+
+generate_dataset_txt_root = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070/"
+generate_dataset_txt_root_face = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070face/"
+img_all_patch = img_save_path + "jaad_patch/video_"
+img_face_patch = img_save_path + "jaad_face/video_"
+
 csv_data = IRBOPP + "train/halpe26_reid/"
-jaad_clip = "D:/CodeResp/jaad_data/JAAD_clips/"
-jaad_img = "D:/CodeResp/jaad_data/JAAD_image/"
-jaad_anno = "D:/CodeResp/JAAD-JAAD_2.0/annotations/"
-jaad_vehicle = "D:/CodeResp/JAAD-JAAD_2.0/annotations_vehicle/"
-alpha_pose = "D:/CodeResp/jaad_data/AlphaReidResultNoFast/"
-img_save_patch = "C:/datasetzyf/jaad_patch/video_"
-dataset_root = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070/"
 cross_csv = IRBOPP + "cross/data/"
+jaad_clip = jaad_result + "JAAD_clips/"
+jaad_img = jaad_result + "JAAD_image/"
+alpha_pose = jaad_result + "AlphaReidResultNoFast/"
+jaad_anno = jaad_anno_path + "annotations/"
+jaad_vehicle = jaad_anno_path + "annotations_vehicle/"
 
 face_position = [0, 1, 2, 3, 4]  # 脸部特征点位置
 head_position = [0, 1, 2, 3, 4, 17, 18]  # 头部特征点位置

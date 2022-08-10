@@ -20,9 +20,9 @@ def read_data_track():
             l2.append(i)
     train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, l1)
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, l2)
-    # 4是特征点开始，11为第一个腿部特征点，82为特征点结束，82:86为box
-    train_norm_pose = normalize_all_point(train_pose[:, 4:86])
-    test_norm_pose = normalize_all_point(test_pose[:, 4:86])
+    # 4是特征点开始，11为第一个腿部特征点，82为特征点结束，82:86为box,87和88是look以及车速
+    train_norm_pose = normalize_all_point(train_pose[:, 4:88])
+    test_norm_pose = normalize_all_point(test_pose[:, 4:88])
 
     return train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list
 
@@ -66,23 +66,28 @@ def normalize_all_point(_keypoints_arr: np.array):
     # angle 5-7,7-9;6-8,8-10;12-14,14-16;11-13,13-15;12-16,11-15;
     # distance:21-23,20-22,21-25,20-24,11-12,13-14,15-16;
     print(len(_keypoints_arr))
-    out_put = np.zeros((len(_keypoints_arr), 4))
+    out_put = np.zeros((len(_keypoints_arr), 6))
     # 先获取bound box
-    for _i in range(4):
+    for _i in range(6):
         out_put[:, _i] = _keypoints_arr[:, 78 + _i]
     angle_pair_list = [[5, 7, 7, 9], [6, 8, 8, 10], [6, 10, 5, 9], [11, 13, 13, 15], [12, 14, 14, 16],
                        [12, 16, 11, 15]]
     distance_pair_list = [[21, 23], [20, 22], [21, 25], [20, 24], [11, 12], [13, 14], [15, 16]]
+    norm_line = np.zeros((len(_keypoints_arr), 2))
+    norm_line[:, 0] = 1
     for _i in range(len(angle_pair_list)):
         angle_pair = angle_pair_list[_i]  # 取出一对直线
         line1 = keypoints_line(_keypoints_arr, angle_pair[0], angle_pair[1])
+        angle1 = angle_row_wise_v2(line1, norm_line)
         line2 = keypoints_line(_keypoints_arr, angle_pair[2], angle_pair[3])
+        angle2 = angle_row_wise_v2(line2, norm_line)
         angle = angle_row_wise_v2(line1, line2)
-        out_put = np.concatenate((out_put, angle), axis=1)
+        out_put = np.concatenate((out_put, angle1, angle2, angle), axis=1)
     for _i in range(len(distance_pair_list)):
         distance_pair = distance_pair_list[_i]
         dx, dy = keypoints_distance(_keypoints_arr, distance_pair[0], distance_pair[1])
         out_put = np.concatenate((out_put, dx, dy), axis=1)
+
     return out_put
 
 
