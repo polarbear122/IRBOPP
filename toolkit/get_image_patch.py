@@ -136,47 +136,47 @@ def face_img_patch_init(each_video_all_pose, _save_path):
     for pose in each_video_pose:
         uuid, v_id, idx, img_id, label = int(pose[0]), int(pose[1]), int(pose[2]), int(pose[3]), int(pose[86])
         img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
-        raw_image = cv2.imread(img_file_path, 1)
-        keypoints = pose[4:82]
-        xtl, ytl, xbr, ybr = get_face_box_from_keypoints(keypoints)
-
-        xtl, ytl, xbr, ybr = round(xtl), round(ytl), round(xbr), round(ybr)
-        # xtl, ytl, width, height = round(pose[82]), round(pose[83]), round(pose[84]), round(pose[85])
-        # xbr, ybr = xtl + width, ytl + height
-        if xbr < 0:
-            xbr = 0
-        elif xbr > 1920:
-            xbr = 1920
-        if xtl < 0:
-            xtl = 0
-        elif xtl > 1920:
-            xtl = 1920
-        if ytl < 0:
-            ytl = 0
-        elif ytl > 1080:
-            ytl = 1080
-        if ybr < 0:
-            ybr = 0
-        elif ybr > 1080:
-            ybr = 1080
-        if ybr == ytl:
-            continue
-        if xbr == xtl:
-            continue
-        # print(ytl, ybr, xtl, xbr)
-        # print("xtl, ytl, xbr, ybr", xtl, ytl, xbr, ybr)
-        img_patch = raw_image[ytl:ybr, xtl:xbr, :]
-        print("img patch shape:", img_patch.shape)
+        # raw_image = cv2.imread(img_file_path, 1)
+        # keypoints = pose[4:82]
+        # xtl, ytl, xbr, ybr = get_face_box_from_keypoints(keypoints)
+        #
+        # xtl, ytl, xbr, ybr = round(xtl), round(ytl), round(xbr), round(ybr)
+        # # xtl, ytl, width, height = round(pose[82]), round(pose[83]), round(pose[84]), round(pose[85])
+        # # xbr, ybr = xtl + width, ytl + height
+        # if xbr < 0:
+        #     xbr = 0
+        # elif xbr > 1920:
+        #     xbr = 1920
+        # if xtl < 0:
+        #     xtl = 0
+        # elif xtl > 1920:
+        #     xtl = 1920
+        # if ytl < 0:
+        #     ytl = 0
+        # elif ytl > 1080:
+        #     ytl = 1080
+        # if ybr < 0:
+        #     ybr = 0
+        # elif ybr > 1080:
+        #     ybr = 1080
+        # if ybr == ytl:
+        #     continue
+        # if xbr == xtl:
+        #     continue
+        # # print(ytl, ybr, xtl, xbr)
+        # # print("xtl, ytl, xbr, ybr", xtl, ytl, xbr, ybr)
+        # img_patch = raw_image[ytl:ybr, xtl:xbr, :]
+        # print("img patch shape:", img_patch.shape)
         os_dir = img_face_patch + str(v_id).zfill(4)
-        # if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
-        #     os.makedirs(os_dir)
+        if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
+            os.makedirs(os_dir)
         img_patch_path = os_dir + "/" + str(img_id_start) + ".jpg"
         img_id_start += 1
-        # print(img_patch_path)
-        cv2.imwrite(img_patch_path, img_patch)
+        # # print(img_patch_path)
+        # cv2.imwrite(img_patch_path, img_patch)
         # 由于训练的图像需要得到uuid，所以路径中新增uuid和id_in_video
         img_patch_path_to_train = img_patch_path + "*" + str(uuid) + "/" + str(img_id_start)
-        if img_id_start % 3 == 0:
+        if img_id_start % 4 == 0:
             if v_id in high_visibility_all_list[:250] and v_id in high_visibility_all_list[250:]:
                 print(v_id, "error, both in train and test")
                 break

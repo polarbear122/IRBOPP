@@ -1,25 +1,28 @@
 IRBOPP = "D:/CodeResp/IRBOPP/"
-jaad_result = "D:/CodeResp/jaad_data/"
-img_save_path = "C:/datasetzyf/"
-jaad_anno_path = "D:/CodeResp/JAAD-JAAD_2.0/"
-
-generate_dataset_txt_root = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070/"
-generate_dataset_txt_root_face = "D:/CodeResp/pytorch-train-nn/dataset/txt_init/lab3070face/"
-img_all_patch = img_save_path + "jaad_patch/video_"
-img_face_patch = img_save_path + "jaad_face/video_"
-
 csv_data = IRBOPP + "train/halpe26_reid/"
 cross_csv = IRBOPP + "cross/data/"
+
+jaad_result = "D:/CodeResp/jaad_data/"
 jaad_clip = jaad_result + "JAAD_clips/"
 jaad_img = jaad_result + "JAAD_image/"
 alpha_pose = jaad_result + "AlphaReidResultNoFast/"
+
+img_save_path = "E:/datasetzyf/"
+img_all_patch = img_save_path + "jaad_patch/video_"
+img_face_patch = img_save_path + "jaad_face/video_"
+
+jaad_anno_path = "D:/CodeResp/JAAD-JAAD_2.0/"
 jaad_anno = jaad_anno_path + "annotations/"
 jaad_vehicle = jaad_anno_path + "annotations_vehicle/"
+
+pytorch_train_code = "D:/CodeResp/ImageClassify/"
+generate_dataset_txt_root = pytorch_train_code + "dataset/txt_init/lab3070/"
+generate_dataset_txt_root_face = pytorch_train_code + "dataset/txt_init/lab3070face/"
 
 face_position = [0, 1, 2, 3, 4]  # 脸部特征点位置
 head_position = [0, 1, 2, 3, 4, 17, 18]  # 头部特征点位置
 half_top_position = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 17, 18, 19]  # 上半身位置
-
+# 随机分类的训练和测试集
 train_data_list = [250, 8, 219, 97, 50, 231, 128, 296, 324, 326, 346, 330, 25, 93, 244, 55, 302, 107, 120, 332, 134,
                    215, 41, 85, 266, 6, 344, 116, 34, 144, 307, 257, 252, 236, 209, 61, 200, 59, 264, 265, 123, 223,
                    216, 1, 80, 132, 18, 108, 141, 56, 275, 162, 213, 67, 285, 174, 315, 113, 168, 277, 321, 225, 77,
@@ -70,7 +73,7 @@ cross_list = [2, 3, 6, 7, 11, 12, 14, 16, 20, 22, 23, 24, 25, 26, 27, 28, 30, 31
               292, 293, 294, 295, 297, 298, 299, 301, 302, 303, 305, 306, 307, 309, 310, 311, 312, 313, 314, 315, 316,
               317, 319, 320, 321, 322, 324, 325, 326, 327, 328, 330, 331, 332, 333, 334, 335, 336, 338, 339, 340, 341,
               345, 346]
-
+# 光线良好的训练和测试集
 jaad_all_videos_train = [1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20, 24, 25, 26, 27, 30, 31, 33, 34, 35, 37, 38,
                          39, 47, 49, 50, 51, 52, 54, 56, 57, 60, 61, 62, 64, 66, 69, 74, 77, 78, 79, 80, 81, 83, 85, 86,
                          88, 91, 94, 95, 98, 108, 109, 111, 112, 114, 119, 120, 121, 122, 126, 129, 130, 131, 132, 133,

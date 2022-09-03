@@ -104,6 +104,21 @@ def random_int_list():
     return train_list, test_list
 
 
+def get_result():
+    path = 'D:/CodeResp/jaad_data/AlphaReidResultNoFast/video_'
+    new_path = 'D:/CodeResp/jaad_data/new/AlphaReidResultNoFast/video_'
+    for i in range(1, 347):
+        i_name = str(i).zfill(4)
+        path_name = path + i_name
+        new_path_name = new_path + i_name
+        file_name = path_name + '/alphapose-results.json'
+        new_file_name = new_path_name + '/alphapose-results.json'
+        if not os.path.exists(new_path_name):
+            os.mkdir(new_path_name)
+        print(file_name, new_file_name)
+        shutil.copy(file_name, new_file_name)
+
+
 # 校验随机的训练和测试数组是合适的
 def test_train_test_list():
     train, test, val = config.jaad_all_videos_train, config.jaad_all_videos_test, config.jaad_all_videos_val
