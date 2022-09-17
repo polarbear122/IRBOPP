@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import pandas as pd
 # from train.test_joint_image_video import calculate_result
-from config import jaad_img
+from config import jaad_total_img
 
 RED = (0, 0, 255)
 GREEN = (0, 255, 0)
@@ -26,7 +26,7 @@ def plot_pose_box_look_w_h(pose_box, annotation, is_look, video_id, keypoints):
 
 # 画出（左上角，右下角）格式的box
 def plot_pose_box_look(pose_box, annotation, is_look, video_id, keypoints):
-    img_file_path = jaad_img + video_id + "/"
+    img_file_path = jaad_total_img + video_id + "/"
     img = cv2.imread(img_file_path + annotation["@frame"] + ".jpg")
     img = draw_pose(img, pose_box, keypoints)
     xtl, ytl, xbr, ybr = round(pose_box[0]), round(pose_box[1]), round(pose_box[2]), round(pose_box[3])
@@ -103,7 +103,7 @@ def draw_pose(frame, bbox, human_keypoints):
             start_xy = part_line[start_p]
             end_xy = part_line[end_p]
             cv2.line(img, start_xy, end_xy, line_color[i])
-    cv2.imwrite("test1.jpg",img)
+    cv2.imwrite("test_result/test1.jpg", img)
 
     return img
 
@@ -111,7 +111,7 @@ def draw_pose(frame, bbox, human_keypoints):
 # 画出检测结果look/not-look,并与真实jaad数据集进行对比
 def plot_test_result():
     video_st, video_end = 2, 3
-    img_path = jaad_img + "/video_"
+    img_path = jaad_total_img + "/video_"
     data_path = "../train/halpe26_data/data_by_video/all_single/"
     vehicle_path = "../analysis_pedestrian/data/"
     vehicle_dict = {0: 'stopped', 1: 'moving_slow', 2: 'moving_fast', 3: 'decelerating', 4: 'accelerating'}

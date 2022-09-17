@@ -1,23 +1,26 @@
-IRBOPP = "D:/CodeResp/IRBOPP/"
+jaad_total_img = "E:/CodeResp/pycode/DataSet/JAAD_image/"
+code_resp_path = "D:/CodeResp/"
+
+IRBOPP = code_resp_path + "IRBOPP/"
 csv_data = IRBOPP + "train/halpe26_reid/"
 cross_csv = IRBOPP + "cross/data/"
 
-jaad_result = "D:/CodeResp/jaad_data/"
+jaad_result = code_resp_path + "jaad_data/"
 jaad_clip = jaad_result + "JAAD_clips/"
-jaad_img = jaad_result + "JAAD_image/"
 alpha_pose = jaad_result + "AlphaReidResultNoFast/"
 
-img_save_path = "E:/datasetzyf/"
-img_all_patch = img_save_path + "jaad_patch/video_"
-img_face_patch = img_save_path + "jaad_face/video_"
+# img_save_path = "/home/um202170407/zhouyf/"
+img_save_path = code_resp_path + "jaad_data/"
+img_all_patch = img_save_path + "patch_img/video_"
+img_face_patch = img_save_path + "face_img/video_"
 
-jaad_anno_path = "D:/CodeResp/JAAD-JAAD_2.0/"
+jaad_anno_path = img_save_path + "JAAD-JAAD_2.0/"
 jaad_anno = jaad_anno_path + "annotations/"
 jaad_vehicle = jaad_anno_path + "annotations_vehicle/"
 
-pytorch_train_code = "D:/CodeResp/ImageClassify/"
-generate_dataset_txt_root = pytorch_train_code + "dataset/txt_init/lab3070/"
-generate_dataset_txt_root_face = pytorch_train_code + "dataset/txt_init/lab3070face/"
+pytorch_train_code = code_resp_path + "ImageClassify/"
+generate_dataset_txt_root = pytorch_train_code + "dataset/local/"
+generate_dataset_txt_root_face = pytorch_train_code + "dataset/hpc/"
 
 face_position = [0, 1, 2, 3, 4]  # 脸部特征点位置
 head_position = [0, 1, 2, 3, 4, 17, 18]  # 头部特征点位置
@@ -93,3 +96,25 @@ jaad_all_videos_test = [5, 15, 16, 17, 22, 23, 28, 29, 32, 36, 42, 43, 45, 46, 4
                         238, 239, 243, 244, 245, 251, 253, 265, 267, 270, 271, 277, 278, 279, 280, 285, 287, 288, 292,
                         294, 295, 299, 300, 304, 305, 307, 308, 309, 313, 314, 316, 322, 327, 329, 330, 332, 333, 334,
                         336, 337, 338, 339, 344]
+# jaad官方all video 分类
+# train len 188
+train_list = [1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20, 24, 25, 26, 27, 30, 31, 33, 34, 35, 37, 38, 39, 47, 49,
+              50, 51, 52, 54, 56, 57, 60, 61, 62, 64, 66, 69, 74, 77, 78, 79, 80, 81, 83, 85, 86, 88, 91, 94, 95, 98,
+              108, 109, 111, 112, 114, 119, 120, 121, 122, 126, 129, 130, 131, 132, 133, 134, 136, 137, 138, 139, 140,
+              142, 143, 145, 146, 147, 149, 154, 157, 158, 159, 161, 166, 167, 168, 169, 171, 174, 175, 176, 180, 182,
+              184, 185, 186, 188, 189, 190, 191, 192, 194, 195, 196, 198, 200, 202, 204, 205, 207, 208, 209, 210, 214,
+              215, 218, 219, 220, 225, 227, 228, 229, 231, 232, 233, 235, 236, 237, 240, 241, 242, 246, 247, 248, 249,
+              250, 254, 255, 256, 257, 258, 259, 260, 261, 262, 264, 266, 268, 269, 272, 275, 276, 281, 282, 283, 284,
+              286, 289, 290, 293, 296, 297, 298, 301, 302, 310, 311, 312, 315, 317, 318, 319, 320, 321, 323, 324, 325,
+              326, 328, 331, 335, 341, 342, 345, 346]
+# test len 126
+test_list = [5, 15, 16, 17, 22, 23, 28, 29, 32, 36, 42, 43, 45, 46, 48, 53, 55, 58, 59, 63, 67, 68, 70, 71, 75, 76, 84,
+             87, 90, 92, 93, 96, 97, 100, 101, 103, 104, 105, 106, 107, 110, 113, 115, 116, 117, 118, 124, 125, 127,
+             128, 135, 141, 144, 148, 150, 151, 152, 153, 155, 162, 163, 164, 165, 173, 177, 178, 179, 183, 187, 197,
+             201, 203, 206, 211, 212, 213, 216, 221, 222, 223, 224, 230, 234, 238, 239, 243, 244, 245, 251, 253, 265,
+             267, 270, 271, 277, 278, 279, 280, 285, 287, 288, 292, 294, 295, 299, 300, 304, 305, 307, 308, 309, 313,
+             314, 316, 322, 327, 329, 330, 332, 333, 334, 336, 337, 338, 339, 344]
+
+# val len 32
+val_list = [2, 6, 21, 40, 41, 44, 65, 72, 73, 82, 89, 99, 102, 123, 156, 160, 170, 172, 181, 193, 199, 217, 226, 252,
+            263, 273, 274, 291, 303, 306, 340, 343]
