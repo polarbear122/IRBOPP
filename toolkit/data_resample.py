@@ -83,7 +83,7 @@ def balance_cascade(data, label):
 
 
 def near_miss(data, label):
-    ee = NearMiss(random_state=0, version=1)
+    ee = NearMiss(version=1)
     print("near_miss 前 data,label shape:", data.shape, label.shape)
     x_resampled, y_resampled = ee.fit_resample(data, label)
     print("near_miss 后 data,label shape:", x_resampled.shape, y_resampled.shape)

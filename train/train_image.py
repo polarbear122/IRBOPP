@@ -131,6 +131,7 @@ if __name__ == "__main__":
     start_at = time.time()
     train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
         = read_data.read_data_track()
+
     print("train_norm_pose.shape:", train_norm_pose.shape)
     print("train label sum", train_label.sum())
     print("test_norm_pose.shape:", test_norm_pose.shape)
@@ -148,7 +149,7 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting": gradient_booting
                    }
-    trainer = name_list[1]  # 选择训练器
+    trainer = name_list[0]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))

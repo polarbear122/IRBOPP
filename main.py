@@ -166,6 +166,13 @@ def angle_row_wise_v2(l1_arr, l2_arr):
     return np.arccos(np.clip(p4, -1.0, 1.0))
 
 
+def random_sort_list():
+    arr = np.array(range(1, 347, 1))
+    print(arr)
+    r = np.random.permutation(arr)
+    print(r)  # 打乱的索引序列，如[2, 6, 4, 8, 12, 16, 0, 18, 10, 14, 20]
+
+
 # train len 188
 train_list = [1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20, 24, 25, 26, 27, 30, 31, 33, 34, 35, 37, 38, 39, 47, 49,
               50, 51, 52, 54, 56, 57, 60, 61, 62, 64, 66, 69, 74, 77, 78, 79, 80, 81, 83, 85, 86, 88, 91, 94, 95, 98,
@@ -189,4 +196,4 @@ val_list = [2, 6, 21, 40, 41, 44, 65, 72, 73, 82, 89, 99, 102, 123, 156, 160, 17
             263, 273, 274, 291, 303, 306, 340, 343]
 
 if __name__ == "__main__":
-    get_txt_file_to_num()
+    random_sort_list()

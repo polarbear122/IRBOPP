@@ -13,6 +13,13 @@ from main import random_int_list
 # 读取有track的alpha pose的csv数据，带有idx
 # 但是没有转换为stream姿势流的处理过程，依然是单帧数据
 
+def read_data_label(list_read):
+    label_path = data_path = csv_data
+    _pose, _label, _video_length_list = normalize_read(data_path, label_path, list_read)
+    _norm_pose = normalize_all_point(_pose[:, 4:86])  # 4是特征点开始，82为特征点结束，82:86为box
+    return _norm_pose, _label, _video_length_list
+
+
 def read_data_track():
     data_path = csv_data
     label_path = csv_data
