@@ -3,7 +3,7 @@
 import os
 import pickle
 import time
-
+import pandas as pd
 import numpy as np
 from sklearn import svm
 from sklearn.ensemble import GradientBoostingClassifier
@@ -31,8 +31,8 @@ partial_fitSGD 允许通过该方法进行小批量（在线/核外）学习。�
 
 def sgd_trainer(x_train, x_test, y_train, y_test):
     clf = make_pipeline(StandardScaler(),
-                        SGDClassifier(max_iter=3000, tol=1e-4, n_jobs=-1, l1_ratio=0.1, loss="hinge",
-                                      penalty="l1"))  # 设置训练器
+                        SGDClassifier(max_iter=1000, tol=1e-2, n_jobs=-1, l1_ratio=0.3, loss="hinge",
+                                      penalty="l2"))  # 设置训练器
     # todo  改变loss函数
     # x_train, y_train = sample_pipeline(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
@@ -47,9 +47,10 @@ def sgd_trainer(x_train, x_test, y_train, y_test):
 
 def forest_trainer(x_train, x_test, y_train, y_test):
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
-    clf = RandomForestClassifier(n_estimators=64, max_depth=64, random_state=0,
-                                 min_samples_leaf=16, n_jobs=34)
-    # clf = RandomForestClassifier(n_estimators=32, max_depth=128,random_state=0, n_jobs=34)
+    clf = RandomForestClassifier(n_estimators=64, max_depth=16, random_state=0, min_samples_split=4,
+                                 max_leaf_nodes=16, min_samples_leaf=2, n_jobs=-1)
+    # clf = RandomForestClassifier(n_estimators=32, max_depth=16, random_state=0, n_jobs=-1)
+
     # x_train, y_train = data_resample.smote_sample(x_train, y_train)
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     # # 使用交叉验证
@@ -73,11 +74,27 @@ def forest_trainer(x_train, x_test, y_train, y_test):
 
 def linear_svc_trainer(x_train, x_test, y_train, y_test):
     clf = make_pipeline(StandardScaler(),
-                        svm.LinearSVC(penalty='l1', loss='squared_hinge', dual=False, tol=0.0001, C=1.0,
+                        svm.LinearSVC(penalty='l2', loss='squared_hinge', dual=True, tol=0.1, C=1.5,
                                       multi_class='ovr', fit_intercept=True, intercept_scaling=1, class_weight=None,
-                                      verbose=0, random_state=None, max_iter=2 ** 12))
+                                      verbose=0, random_state=None, max_iter=512))
 
     # x_train, y_train = data_resample.sample_pipeline(x_train, y_train)
+    clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
+    train_data_score = clf.score(x_train, y_train) * 100
+    test_data_score = clf.score(x_test, y_test) * 100
+    log.logger.info("训练集正确率:%0.3f%%,测试集正确率:%0.3f%%" % (train_data_score, test_data_score))
+    y_pred = clf.predict(x_test)
+    cal.calculate_all(y_test, y_pred)  # 评估计算结果
+    s = pickle.dumps(clf)
+    return s
+
+
+def svm_trainer(x_train, x_test, y_train, y_test):
+    # clf = svm.SVC(C=1, kernel='rbf', decision_function_shape='ovr', max_iter=2048)  # 设置训练器
+    clf = svm.SVC()
+    # x_train, y_train = data_resample.naive_random_under_sample(x_train, y_train)
+    # x_train, y_train = data_resample.smote_sample(x_train, y_train)
+
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     train_data_score = clf.score(x_train, y_train) * 100
     test_data_score = clf.score(x_test, y_test) * 100
@@ -129,9 +146,22 @@ def default(_all_data, _all_labels):  # 默认情况下执行的函数
 
 if __name__ == "__main__":
     start_at = time.time()
-    train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
-        = read_data.read_data_track()
+    # train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
+    #     = read_data.read_data_track()
+    pose, label, _ = read_data.read_data_label(range(1, 347))
 
+    face_path = 'D:/CodeResp/Pytorch-MTCNN-master/'
+    boxes = face_path + 'boxes.csv'
+    landmarks = face_path + 'landmarks.csv'
+    boxes_data = pd.read_csv(boxes, header=None, sep=',', encoding='utf-8').values[:, 3:]
+    boxes_w_h = np.concatenate(((boxes_data[:, 1] - boxes_data[:, 0]).reshape(-1, 1),
+                                (boxes_data[:, 3] - boxes_data[:, 2]).reshape(-1, 1)), axis=1)
+    pose = np.concatenate((pose, boxes_w_h), axis=1)
+    # landmarks_data = pd.read_csv(landmarks, header=None, sep=',', encoding='utf-8').values[:, 3:]
+    # pose = np.concatenate((pose, landmarks_data), axis=1)
+    split_id = 55585
+    train_norm_pose, train_label, test_norm_pose, test_label \
+        = pose[:split_id], label[:split_id], pose[split_id:], label[split_id:]
     print("train_norm_pose.shape:", train_norm_pose.shape)
     print("train label sum", train_label.sum())
     print("test_norm_pose.shape:", test_norm_pose.shape)
@@ -142,20 +172,22 @@ if __name__ == "__main__":
     # train_norm_pose, test_norm_pose, train_label, test_label, = train_test_split(pose_all, label_all, test_size=0.3,
     #                                                                              random_state=0)
     get_data_at = time.time()
-    name_list = ["SGD", "Forest", "LinearSVC", "LogisticRegression", "GradientBooting"]
-    train_model = {"SGD": sgd_trainer,
-                   "Forest": forest_trainer,
-                   "LinearSVC": linear_svc_trainer,
+    name_list = ["SGD", "Forest", "LinearSVC", "SVM", "LogisticRegression", "GradientBooting"]
+    train_model = {"SGD"               : sgd_trainer,
+                   "Forest"            : forest_trainer,
+                   "LinearSVC"         : linear_svc_trainer,
+                   "SVM"               : svm_trainer,
                    "LogisticRegression": logistic_regression,
-                   "GradientBooting": gradient_booting
+                   "GradientBooting"   : gradient_booting
                    }
-    trainer = name_list[0]  # 选择训练器
+    trainer = name_list[1]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))
 
     model = train_model.get(trainer, default)(train_norm_pose, test_norm_pose, train_label,
                                               test_label)  # 执行对应的函数，如果没有就执行默认的函数
+
     save_model("../train/trained_model/image/", trainer + "_image_ml.model", model)
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at

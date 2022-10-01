@@ -48,9 +48,12 @@ def sgd_trainer(x_train, x_test, y_train, y_test):
 
 def forest_trainer(x_train, x_test, y_train, y_test):
     # x_train, y_train = data_resample.adasyn(x_train, y_train)
-    clf = RandomForestClassifier(n_jobs=34)
-    # clf = RandomForestClassifier(n_estimators=32, max_depth=128,random_state=0, n_jobs=34)
     x_train, y_train = data_resample.naive_random_over_sample(x_train, y_train)
+    clf = RandomForestClassifier(n_jobs=-1)
+    # clf = RandomForestClassifier(n_estimators=32, max_depth=128,random_state=0, n_jobs=34)
+    # clf = RandomForestClassifier(n_estimators=64, max_depth=16, random_state=0, min_samples_split=4,
+    #                              max_leaf_nodes=16, min_samples_leaf=2, n_jobs=-1)
+    # x_train, y_train = data_resample.naive_random_over_sample(x_train, y_train)
     print('y_train.sum', y_train.sum())
     clf.fit(x_train, y_train.ravel())  # 对训练集部分进行训练
     # # 使用交叉验证
@@ -146,10 +149,10 @@ def read_label():
 
 if __name__ == "__main__":
     start_at = time.time()
+    norm_pose = pd.read_csv("D:/CodeResp/ImageClassify/test/resnet18_avepool/all_body.csv", header=None, sep=',',
+                            encoding='utf-8').values
     all_label = read_label()
-    norm_pose = pd.read_csv("D:/CodeResp/ImageClassify/test/resnet18_avepool/test.csv", header=None, sep=',',
-                            encoding='utf-8')
-    split_id = 75000
+    split_id = 55585
     train_norm_pose, train_label, test_norm_pose, test_label = \
         norm_pose[:split_id], all_label[:split_id], norm_pose[split_id:], all_label[split_id:]
     # train_norm_pose, test_norm_pose, train_label, test_label, = train_test_split(norm_pose, all_label, test_size=0.3,
@@ -170,7 +173,7 @@ if __name__ == "__main__":
                    "LogisticRegression": logistic_regression,
                    "GradientBooting"   : gradient_booting
                    }
-    trainer = name_list[1]  # 选择训练器
+    trainer = name_list[0]  # 选择训练器
     log.logger.info("%s 单帧pose训练开始--------------------------------" % (os.path.basename(__file__).split(".")[0]))
     log.logger.info("开始训练%s分类器:训练集数据规模(%d,%d),%d" %
                     (trainer, train_norm_pose.shape[0], train_norm_pose.shape[1], train_label.shape[0]))

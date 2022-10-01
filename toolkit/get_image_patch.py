@@ -126,8 +126,8 @@ def generate_img_patch_init(all_pose, txt_path, _img_save_path, _is_body_not_fac
         os_dir = _img_save_path + str(v_id).zfill(4)
         if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
             os.makedirs(os_dir)
-        img_id_start += 1
         img_patch_path = os_dir + "/" + str(img_id_start) + ".jpg"
+        img_id_start += 1
         if False:
             img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
             print("img_file_path", img_file_path)
@@ -146,19 +146,17 @@ def generate_img_patch_init(all_pose, txt_path, _img_save_path, _is_body_not_fac
         img_patch_path_to_train = img_patch_path + "*" + str(uuid) + "/" + str(img_id_start)
         train_l, test_l, val_l = train_list_random, test_list_random, val_list_random
         all_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
-        # if img_id_start % 3 == 0:
-        #     if v_id in train_l:
-        #         train_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
-        #         label_train[train_id] = label
-        #         train_id += 1
-        #     elif v_id in test_l:
-        #         test_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
-        #         label_test[test_id] = label
-        #         test_id += 1
-        #     elif v_id in val_l:
-        #         val_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
-        #     else:
-        #         print(v_id, "error, video id is not in train or test list")
+
+        if img_id_start % 10 in [0, 4, 8]:
+            train_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
+            label_train[train_id] = label
+            train_id += 1
+        elif img_id_start % 10 in [1, 5]:
+            test_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
+            label_test[test_id] = label
+            test_id += 1
+        elif img_id_start % 10 in [9]:
+            val_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
     print("height width average:%.2f,%.2f" % (np.average(h_all[:st_id]), np.average(w_all[:st_id])))
     train_txt.close()
     test_txt.close()

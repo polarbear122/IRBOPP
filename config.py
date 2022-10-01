@@ -19,7 +19,7 @@ jaad_anno = jaad_anno_path + "annotations/"
 jaad_vehicle = jaad_anno_path + "annotations_vehicle/"
 
 pytorch_train_code = code_resp_path + "ImageClassify/"
-generate_dataset_txt_root = pytorch_train_code + "dataset/localpath/local/"
+generate_dataset_txt_root = pytorch_train_code + "dataset/localpath/random/"
 generate_dataset_txt_root_face = pytorch_train_code + "dataset/hpc/"
 generate_face_txt_root = pytorch_train_code + "dataset/localpath/localface/"
 face_position = [0, 1, 2, 3, 4]  # 脸部特征点位置
