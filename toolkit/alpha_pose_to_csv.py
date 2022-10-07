@@ -55,9 +55,9 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
         track_box = [annotations["track"]]
     else:
         track_box = annotations["track"]
-    vehicle = pd.read_csv(config.IRBOPP + "analysis_pedestrian/data/" + "data" + str(int_video_id) + ".csv",
-                          header=None,
-                          sep=',', encoding='utf-8').values
+    # vehicle = pd.read_csv(config.IRBOPP + "analysis_pedestrian/data/" + "data" + str(int_video_id) + ".csv",
+    #                       header=None,
+    #                       sep=',', encoding='utf-8').values
     is_repeat = 0
     # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  # 设置输出视频为mp4格式 cap_fps, size = 30, (1920,1080)
     # size（width，height）
@@ -112,14 +112,14 @@ def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid
                 if is_cross == "not-crossing":
                     label_cross = 0
                 vehicle_behaviour = 0
-                for _i in range(len(vehicle)):
-                    if vehicle[_i][1] == img_frame_id:
-                        vehicle_behaviour = vehicle[_i][2]
-                    elif vehicle[_i][1] > img_frame_id:
-                        break
+                # for _i in range(len(vehicle)):
+                #     if vehicle[_i][1] == img_frame_id:
+                #         vehicle_behaviour = vehicle[_i][2]
+                #     elif vehicle[_i][1] > img_frame_id:
+                #         break
                 x.append(
-                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [
-                        label] + [vehicle_behaviour] + [label_cross])
+                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
+
                 uuid += 1
                 need_plot = False
                 if need_plot and pose_box and max_iou > max_iou_threshold:

@@ -5,9 +5,9 @@ import pandas as pd
 import numpy as np
 import cv2
 import os
-
-from config import jaad_total_img, img_all_patch, generate_face_txt_root, generate_dataset_txt_root, img_face_patch
-from toolkit.read_data import train_data_list, test_data_list
+from PIL import Image
+from config import generate_dataset_txt_root, img_face_patch
+import time
 
 config_csv_data = "../train/halpe26_reid/"
 
@@ -34,8 +34,7 @@ jaad_all_videos_val = [6, 21, 40, 44, 65, 72, 73, 82, 89, 99, 102, 123, 156, 160
 high_visibility_all_list = jaad_all_videos_test + jaad_all_videos_train + jaad_all_videos_val
 
 
-def read_pose_annotation(__video_id: int):
-    data_path = config_csv_data
+def read_pose_annotation(data_path, __video_id: int):
     pose_arr = pd.read_csv(data_path + "data" + str(__video_id) + ".csv", header=None, sep=',',
                            encoding='utf-8').values
     print(__video_id, "shape:", pose_arr.shape)
@@ -66,21 +65,23 @@ def get_box_from_keypoints(pose, is_body):
     if is_body:
         xtl, ytl, width, height = pose[-4], pose[-3], pose[-2], pose[-1]
         xbr, ybr = xtl + width, ytl + height
+        xtl_factor, xbr_factor, ytl_factor, ybr_factor = 1.2, 1.2, 0.7, 0.3
     else:
         face_list = [0, 1, 2, 3, 4, 17, 18]
         xtl, ytl = 1920, 1080
         xbr, ybr = 0, 0
+        xtl_factor, xbr_factor, ytl_factor, ybr_factor = 1.5, 1.5, 1.5, 1.5
         for i in face_list:
             xtl = min(xtl, pose[i * 3])
             ytl = min(ytl, pose[i * 3 + 1])
             xbr = max(xbr, pose[i * 3])
             ybr = max(ybr, pose[i * 3 + 1])
     x_mid, x_sub = (xtl + xbr) / 2, xbr - xtl
-    xtl = x_mid - x_sub * 1.5
-    xbr = x_mid + x_sub * 1.5
+    xtl = x_mid - x_sub * xtl_factor
+    xbr = x_mid + x_sub * xbr_factor
     y_mid, y_sub = (ytl + ybr) / 2, ybr - ytl
-    ytl = y_mid - y_sub * 1.5
-    ybr = y_mid + y_sub * 1.5
+    ytl = y_mid - y_sub * ytl_factor
+    ybr = y_mid + y_sub * ybr_factor
     if xbr < 0:
         xbr = 0
     elif xbr > 1920:
@@ -105,58 +106,72 @@ def get_box_from_keypoints(pose, is_body):
     return xtl, ytl, xbr, ybr, need_continue
 
 
+# 检测路径，如果不存在就新建
+def check_mkdir(_path):
+    if not os.path.exists(_path):  # 判断是否存在文件夹如果不存在则创建为文件夹
+        os.makedirs(_path)
+
+
+def write_dataset_txt(train_txt, test_txt, val_txt, all_txt, img_path, label, img_id_start):
+    if img_id_start % 5 == 0:
+        all_txt.write(img_path + ' ' + str(label) + '\n')
+        if img_id_start <= 132000:
+            train_txt.write(img_path + ' ' + str(label) + '\n')
+        elif 132000 < img_id_start < 176000:
+            test_txt.write(img_path + ' ' + str(label) + '\n')
+        elif img_id_start > 176000:
+            val_txt.write(img_path + ' ' + str(label) + '\n')
+        else:
+            print('img id start', img_id_start)
+
+
 # 整个的人体图像patch,未经过resize，保留原始大小
-def generate_img_patch_init(all_pose, txt_path, _img_save_path, _is_body_not_face):
-    global st_id, train_id, test_id
-    image_path = jaad_total_img + "video_"
-    each_video_pose = all_pose[0]
+def generate_img_patch_init(each_video_pose, txt_path, _img_save_path, _source_path, _is_body_not_face):
+    image_path = _source_path + "video_"
     img_id_start = 0
     print(txt_path)
     train_txt = open(txt_path + 'train.txt', 'a')  # 以追加写方式打开文件
     test_txt = open(txt_path + 'test.txt', 'a')
     val_txt = open(txt_path + 'val.txt', 'a')
     all_txt = open(txt_path + 'all.txt', 'a')
-    for pose in each_video_pose:
+    process_raw_img = 0  # 保存图像，避免重复调用
+    for i in range(len(each_video_pose)):
+        pose = each_video_pose[i]
         uuid, v_id, idx, img_id, label = int(pose[0]), int(pose[1]), int(pose[2]), int(pose[3]), int(pose[86])
-        xtl, ytl, xbr, ybr, need_continue = get_box_from_keypoints(pose[4:86], _is_body_not_face)
-        if need_continue:
+        xtl, ytl, xbr, ybr, need_continue = get_box_from_keypoints(pose[4:86], True)
+        xtl_f, ytl_f, xbr_f, ybr_f, need_continue_f = get_box_from_keypoints(pose[4:86], False)
+        if need_continue or need_continue_f:
             continue
-        h_all[st_id], w_all[st_id] = ybr - ytl, xbr - xtl
-        st_id += 1
-        os_dir = _img_save_path + str(v_id).zfill(4)
-        if not os.path.exists(os_dir):  # 判断是否存在文件夹如果不存在则创建为文件夹
-            os.makedirs(os_dir)
-        img_patch_path = os_dir + "/" + str(img_id_start) + ".jpg"
-        img_id_start += 1
+
+        check_mkdir(_img_save_path + str(v_id).zfill(4))
+        # img_patch_path = os_dir + "/" + str(img_id_start) + ".jpg"
+
         if False:
             img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
             print("img_file_path", img_file_path)
-            raw_image = cv2.imread(img_file_path, 1)
-            img_patch = raw_image[ytl:ybr, xtl:xbr, :]
-            print(img_patch_path)
-            cv2.imwrite(img_patch_path, img_patch)
+            if i == 0 or v_id != int(each_video_pose[i - 1][1]) or img_id != int(each_video_pose[i - 1][3]):
+                process_raw_img = Image.open(img_file_path)
+            box = (xtl, ytl, xbr, ybr)
+            img_patch = process_raw_img.crop(box)
+            img_patch.save('D:/CodeResp/pie_data/patch_img/video_0012/' + str(img_id_start) + ".jpg")
+            face_box = (xtl_f, ytl_f, xbr_f, ybr_f)
+            face_img_patch = process_raw_img.crop(face_box)
+            face_img_patch.save('D:/CodeResp/pie_data/patch_face/video_0012/' + str(img_id_start) + ".jpg")
             if False:
                 cv2.putText(img_patch, str(v_id) + "v" + str(img_id), (25, 25), cv2.FONT_HERSHEY_SIMPLEX, 1,
                             (255, 0, 255), 2)
                 cv2.putText(img_patch, str(label), (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
+
                 print("video", v_id, img_id, label)
                 cv2.imshow("img", img_patch)
                 cv2.waitKey(1)
         # 由于训练的图像需要得到uuid，所以路径中新增uuid和idx
-        img_patch_path_to_train = img_patch_path + "*" + str(uuid) + "/" + str(img_id_start)
-        train_l, test_l, val_l = train_list_random, test_list_random, val_list_random
-        all_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
-
-        if img_id_start % 10 in [0, 4, 8]:
-            train_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
-            label_train[train_id] = label
-            train_id += 1
-        elif img_id_start % 10 in [1, 5]:
-            test_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
-            label_test[test_id] = label
-            test_id += 1
-        elif img_id_start % 10 in [9]:
-            val_txt.write(img_patch_path_to_train + ' ' + str(label) + '\n')
+        # img_patch_path_to_train = img_patch_path + "*" + str(uuid) + "/" + str(img_id_start)
+        # train_l, test_l, val_l = train_list_random, test_list_random, val_list_random
+        #
+        img_patch_path_to_train = 'D:/CodeResp/pie_data/patch_face/video_0012/' + str(img_id_start) + ".jpg"
+        write_dataset_txt(train_txt, test_txt, val_txt, all_txt, img_patch_path_to_train, label, img_id_start)
+        img_id_start += 1
     print("height width average:%.2f,%.2f" % (np.average(h_all[:st_id]), np.average(w_all[:st_id])))
     train_txt.close()
     test_txt.close()
@@ -166,7 +181,7 @@ def generate_img_patch_init(all_pose, txt_path, _img_save_path, _is_body_not_fac
 
 def random_sort_high_vis_list():
     arr = np.array(high_visibility_all_list)
-    print(arr)
+    # print(arr)
     r = np.random.permutation(arr).tolist()
     lr = len(r)
     return r[:lr // 4 * 3], r[lr // 4 * 3:lr // 10 * 9], r[lr // 10 * 9:]
@@ -175,15 +190,17 @@ def random_sort_high_vis_list():
 if __name__ == "__main__":
     train_list_random, test_list_random, val_list_random = random_sort_high_vis_list()
     st_id = 0
-    h_all, w_all = np.zeros((100000,), float), np.zeros((100000,), float)
+    h_all, w_all = np.zeros((300000,), float), np.zeros((300000,), float)
     train_id, test_id = 0, 0
-    label_train, label_test = np.zeros((100000,), float), np.zeros((100000,), float)
+    label_train, label_test = np.zeros((300000,), float), np.zeros((300000,), float)
     is_body_not_face = True  # 是否生成全身图像数据
     if is_body_not_face:
-        save_txt_path = generate_dataset_txt_root
-        img_save_path = img_all_patch
+        save_txt_path = generate_dataset_txt_root + 'random/'
+        save_txt_path = generate_dataset_txt_root + 'pieface/'
+        # img_save_path = img_all_patch
+        img_save_path = 'D:/CodeResp/pie_data/patch_img/video_'
     else:
-        save_txt_path = generate_face_txt_root
+        save_txt_path = generate_dataset_txt_root + 'localface/'
         img_save_path = img_face_patch
     train_txt_file = open(save_txt_path + 'train.txt', 'w')  # 以写方式打开文件
     test_txt_file = open(save_txt_path + 'test.txt', 'w')
@@ -193,14 +210,19 @@ if __name__ == "__main__":
     test_txt_file.close()
     val_txt_file.close()
     all_txt_file.close()
-    for video_read_id in range(1, 347):
-        try:
-            all_pose = np.array(read_pose_annotation(video_read_id))
-            generate_img_patch_init(all_pose, save_txt_path, img_save_path, is_body_not_face)
-        except OSError:
-            print("data ", video_read_id, "is not exist")
-        else:
-            print("data has been load ", video_read_id)
+    pie_pose = np.array(pd.read_csv('D:/CodeResp/PIE-master/data_set04_0012.csv', header=None, sep=',',
+                                    encoding='utf-8').values)
+    source_img_path = 'E:/CodeResp/pycode/DataSet/PIE_image/set04/'
+    generate_img_patch_init(pie_pose, save_txt_path, img_save_path, source_img_path, is_body_not_face)
+
+    # for video_read_id in range(1, 347):
+    #     try:
+    #         all_pose = np.array(read_pose_annotation(config_csv_data, video_read_id))
+    #         generate_img_patch_init(all_pose[0], save_txt_path, img_save_path, jaad_total_img, is_body_not_face)
+    #     except OSError:
+    #         print("data ", video_read_id, "is not exist")
+    #     else:
+    #         print("data has been load ", video_read_id)
     l_train = label_train[:train_id]
     l_test = label_test[:test_id]
     print('list_random', train_list_random, '\n', test_list_random, '\n', val_list_random)
@@ -209,3 +231,6 @@ if __name__ == "__main__":
     print("false-sum: train:%.0f,test:%.0f" % (train_id - np.sum(l_train), test_id - np.sum(l_test)))
     np.savetxt("./test_result/train_label.csv", l_train, delimiter=',')
     np.savetxt("./test_result/test_label.csv", label_test[:test_id], delimiter=',')
+    np.savetxt("./test_result/train_list_random.csv", train_list_random, delimiter=',')
+    np.savetxt("./test_result/test_list_random.csv", test_list_random, delimiter=',')
+    np.savetxt("./test_result/val_list_random.csv", val_list_random, delimiter=',')

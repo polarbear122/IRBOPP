@@ -39,10 +39,12 @@ def make_dir_file(path):
 
 
 if __name__ == "__main__":
-    video_id_start = 1
-    end = 347  # 共有1--346号视频
-    for i in range(video_id_start, end):
-        video_path = jaad_clip + "video_" + str(i).zfill(4) + ".mp4"
-        save_path = jaad_total_img + "video_" + str(i).zfill(4) + "/"
-        make_dir_file(save_path)
-        video_to_image(video_path, save_path)
+    video_to_image('E:/CodeResp/pycode/DataSet/PIE_clips/set04/video_0012.mp4',
+                   'E:/CodeResp/pycode/DataSet/PIE_image/set04/video_0012/')
+    # video_id_start = 1
+    # end = 347  # 共有1--346号视频
+    # for i in range(video_id_start, end):
+    #     video_path = jaad_clip + "video_" + str(i).zfill(4) + ".mp4"
+    #     save_path = jaad_total_img + "video_" + str(i).zfill(4) + "/"
+    #     make_dir_file(save_path)
+    #     video_to_image(video_path, save_path)

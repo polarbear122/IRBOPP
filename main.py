@@ -1,10 +1,14 @@
 import random
+import time
 
 import cv2
 import numpy as np
 import pandas as pd
 import torch
 import os
+
+from PIL import Image
+
 import config
 import train.test_joint_image_video as jo
 
@@ -195,6 +199,21 @@ def delete_img():
         #     print(v_id, 'no video')
 
 
+def test_pil_read_img():
+    st = time.time()
+    for i in range(200):
+        raw_img = Image.open('E:/CodeResp/pycode/DataSet/PIE_image/set03/video_0010/' + str(i) + '.jpg')
+        save_path = 'D:/CodeResp/pie_data/patch_img/testpil/' + str(i) + '.jpg'
+        box = (100, 100, 550, 350)
+        region = raw_img.crop(box)
+        region.save(save_path)
+        # raw_img = cv2.imread('E:/CodeResp/pycode/DataSet/PIE_image/set03/video_0010/' + str(i) + '.jpg', 1)
+        # crop = raw_img[100:350, 100:550, :]
+        # cv2.imwrite('D:/CodeResp/pie_data/patch_img/testpil/' + str(i) + '.jpg', crop)
+    end = time.time()
+    print('end-st %f s' % ((end - st)/200))
+
+
 # train len 188
 train_list = [1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20, 24, 25, 26, 27, 30, 31, 33, 34, 35, 37, 38, 39, 47, 49,
               50, 51, 52, 54, 56, 57, 60, 61, 62, 64, 66, 69, 74, 77, 78, 79, 80, 81, 83, 85, 86, 88, 91, 94, 95, 98,
@@ -218,4 +237,4 @@ val_list = [2, 6, 21, 40, 41, 44, 65, 72, 73, 82, 89, 99, 102, 123, 156, 160, 17
             263, 273, 274, 291, 303, 306, 340, 343]
 
 if __name__ == "__main__":
-    delete_img()
+    test_pil_read_img()

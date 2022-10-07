@@ -1,6 +1,7 @@
+import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
-
+from sklearn.metrics import roc_auc_score, roc_curve, auc
+import matplotlib.pyplot as plt
 from log_config.log import logger
 
 
@@ -123,6 +124,25 @@ def calculate_accuracy(y_true, y_predict):
     return accuracy
 
 
+def acu_curve(y, prob):
+    fpr, tpr, threshold = roc_curve(y, prob)  # 计算真正率和假正率
+    roc_auc = auc(fpr, tpr)  # 计算auc的值
+
+    lw = 2
+    plt.figure(figsize=(10, 10))
+    plt.plot(fpr, tpr, color='darkorange',
+             lw=lw, label='ROC curve (area = %0.3f)' % roc_auc)  # 假正率为横坐标，真正率为纵坐标做曲线
+    plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver operating characteristic')
+    plt.legend(loc="lower right")
+
+    plt.show()
+
+
 def calculate_all(y_true, y_predict):
     calculate_name = [calculate_TP, calculate_TN, calculate_FP, calculate_FN,
                       calculate_precision, calculate_recall, calculate_F1, roc_auc, brier_score, calculate_accuracy]
@@ -131,10 +151,19 @@ def calculate_all(y_true, y_predict):
 
 
 if __name__ == "__main__":
-    y = [1, 1, 1, 1, 0]
-    y_pre = [0, 1, 1, 1, 0]
-    video_label = pd.read_csv("../train/trained_model/video/Forest_image_y_pred.csv", header=None, sep=',',
-                              encoding='utf-8').values
-    image_label = pd.read_csv("../train/trained_model/image/Forest_image_y_pred.csv", header=None, sep=',',
-                              encoding='utf-8').values
-    calculate_all(video_label, image_label)
+    y = [1, 1, 0, 1, 0]
+    y_pre = [1, 1, 1, 1, 0]
+    target = pd.read_csv("only_look_label.csv", header=None, sep=',',
+                         encoding='utf-8').values
+    label_true = np.zeros((1, 1))
+    for i in range(1, 347):
+        name = 'D:/CodeResp/IRBOPP/train/halpe26_reid/label' + str(i) + '.csv'
+        try:
+            label_i = pd.read_csv(name, header=None, sep=',', encoding='utf-8').values
+            label_true = np.concatenate((label_true, label_i))
+        except FileNotFoundError:
+            pass
+    label_true = label_true[1:, :]
+    print(label_true.shape)
+    print(target.shape)
+    calculate_all(label_true, target)
