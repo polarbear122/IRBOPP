@@ -1,2 +1,0 @@
-all_single中保存的是包含video_id，img_id，keypoints，box(左上角点，宽高)，label的85列数据
-single中保存的是包含keypoints，box(左上角点，宽高)的82列数据

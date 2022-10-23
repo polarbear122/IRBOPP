@@ -153,6 +153,7 @@ def get_init_data():
             uuid += x.shape[0]
             video_count += 1
             x_array = np_sort(np.asarray(x))
+
             y_array = x_array[:, -1]
             np.savetxt("../cross/data/data" + str(i) + ".csv", x_array, delimiter=',')
             np.savetxt("../cross/data/label" + str(i) + ".csv", y_array, delimiter=',')

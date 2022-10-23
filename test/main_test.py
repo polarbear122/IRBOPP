@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import cv2
+import pandas as pd
 
 
 def generate_random_video_list():
@@ -40,5 +41,17 @@ def video_read():
     cv2.destroyAllWindows()
 
 
+def test_idx_video_id():
+    pose_arr = pd.read_csv('train/pose_all.csv', header=None, sep=',', encoding='utf-8').values
+    for i in range(14787):
+        idx_result = np.where(pose_arr[:, 2] == i)
+        print(len(idx_result[0]))
+        if len(idx_result[0]) == 0:
+            continue
+        video_arr = pose_arr[idx_result][:, 1]
+        video_ave = np.average(video_arr)
+        print(np.where(video_arr != video_ave))
+
+
 if __name__ == "__main__":
-    video_read()
+    test_idx_video_id()
