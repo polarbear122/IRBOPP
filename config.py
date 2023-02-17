@@ -7,14 +7,14 @@ cross_csv = IRBOPP + "cross/data/"
 
 jaad_result = code_resp_path + "jaad_data/"
 jaad_clip = jaad_result + "JAAD_clips/"
-alpha_pose = jaad_result + "AlphaReidResultNoFast/"
+alpha_pose = 'E:/CodeResp/pycode/DataSet/' + "AlphaReidResultNoFast/"
 
 # img_save_path = "/home/um202170407/zhouyf/"
 img_save_path = code_resp_path + "jaad_data/"
 img_all_patch = img_save_path + "patch_img/video_"
 img_face_patch = img_save_path + "patch_face/video_"
 
-jaad_anno_path = img_save_path + "JAAD-JAAD_2.0/"
+jaad_anno_path = 'E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/'
 jaad_anno = jaad_anno_path + "annotations/"
 jaad_vehicle = jaad_anno_path + "annotations_vehicle/"
 

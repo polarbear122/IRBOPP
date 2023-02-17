@@ -1,11 +1,10 @@
 # 读取data和label的csv文件，并以一定的格式返回
-import cv2
+import os.path
+
 import numpy as np
 import pandas as pd
-import scipy.io as scio
 
-import config
-from config import cross_csv, jaad_all_videos_train, jaad_all_videos_val
+from config import cross_csv
 
 
 def read_data_track():
@@ -121,7 +120,7 @@ def read_data_stream():
     # train_pose、test_pose会读取到列数据
     train_pose, train_label, train_video_length_list = normalize_read(data_path, label_path, l1)
     test_pose, test_label, test_video_length_list = normalize_read(data_path, label_path, l2)
-    print("pre_train_pose:shape",train_pose.shape)
+    print("pre_train_pose:shape", train_pose.shape)
     train_norm_pose = normalize_all_point(train_pose[:, 4:88])
     test_norm_pose = normalize_all_point(test_pose[:, 4:88])
     train_norm_pose = norm_points_to_stream(train_norm_pose)
@@ -191,3 +190,19 @@ def angle_row_wise_v2(l1_arr, l2_arr):
     b = np.sqrt(p2 * p3)
     p4 = np.divide(a, b, out=np.zeros_like(b), where=b != 0)
     return np.arccos(np.clip(p4, -1.0, 1.0)).reshape((-1, 1))
+
+
+def convert_float_to_int():
+    root = 'cross/data/'
+    for i in range(1, 347):
+        str_i = str(i)
+        if not os.path.exists(root + 'data' + str_i + '.csv'):
+            continue
+        _pose = pd.read_csv(root + 'data' + str_i + '.csv', header=None, sep=',', encoding='utf-8')
+        _label = pd.read_csv(root + 'label' + str_i + '.csv', header=None, sep=',', encoding='utf-8')
+        np.savetxt('cross/new_data/data' + str(i) + ".csv", _pose, delimiter=',', fmt='%.3f')
+        np.savetxt('cross/new_data/label' + str(i) + ".csv", _label, delimiter=',', fmt='%d')
+
+
+if __name__ == '__main__':
+    convert_float_to_int()

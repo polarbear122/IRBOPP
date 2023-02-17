@@ -3,18 +3,17 @@
 import os
 import pickle
 import time
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from sklearn import svm
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import SGDClassifier, LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold, train_test_split
-from sklearn.model_selection import KFold
+
 import calculate.calculate as cal
-import toolkit.data_resample as data_resample
 from log_config import log
 from toolkit import read_data
 from toolkit.tool import save_model
@@ -149,7 +148,7 @@ if __name__ == "__main__":
     # train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
     #     = read_data.read_data_track()
     pose, label, _ = read_data.read_data_label(range(1, 347))
-
+    print(np.average(pose[:, 80]), np.average(pose[:, 81]))
     face_path = 'D:/CodeResp/Pytorch-MTCNN-master/'
     boxes = face_path + 'boxes.csv'
     landmarks = face_path + 'landmarks.csv'

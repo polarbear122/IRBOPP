@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image
 
 from config import jaad_total_img, img_all_patch, img_face_patch
+from toolkit.read_data import read_data_label
 
 train_list = [1, 3, 4, 5, 6, 9, 10, 11, 12, 17, 21, 25, 27, 28, 31, 37, 38, 39, 44, 45, 46, 47, 48, 49, 50, 53, 54, 55,
               56, 57, 59, 60, 61, 62, 63, 65, 66, 68, 70, 71, 79, 80, 82, 84, 86, 87, 89, 90, 91, 92, 95, 97, 98, 100,
@@ -112,16 +113,18 @@ def generate_img_patch_init(all_pose, txt_path, _is_body_not_face):
         xtl_f, ytl_f, xbr_f, ybr_f, need_continue_f = get_box_from_keypoints(pose[4:86], False)
         if need_continue or need_continue_f:
             continue
-        img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
-        if i == 0 or v_id != int(all_pose[i - 1][1]) or img_id != int(all_pose[i - 1][3]):
-            process_raw_img = Image.open(img_file_path)
-        box = (xtl, ytl, xbr, ybr)
-        img_patch = process_raw_img.crop(box)
-        img_patch.save('train/halpe26_data/body_img/' + str(uuid) + ".bmp")
-        face_box = (xtl_f, ytl_f, xbr_f, ybr_f)
-        print(box, face_box)
-        face_img_patch = process_raw_img.crop(face_box)
-        face_img_patch.save('train/halpe26_data/face_img/' + str(uuid) + ".bmp")
+        need_gen_img = False
+        if need_gen_img:
+            img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
+            if i == 0 or v_id != int(all_pose[i - 1][1]) or img_id != int(all_pose[i - 1][3]):
+                process_raw_img = Image.open(img_file_path)
+            box = (xtl, ytl, xbr, ybr)
+            img_patch = process_raw_img.crop(box)
+            img_patch.save('train/halpe26_data/body_img/' + str(uuid) + ".bmp")
+            face_box = (xtl_f, ytl_f, xbr_f, ybr_f)
+            print(box, face_box)
+            face_img_patch = process_raw_img.crop(face_box)
+            face_img_patch.save('train/halpe26_data/face_img/' + str(uuid) + ".bmp")
     train_txt.close()
     test_txt.close()
     val_txt.close()
@@ -132,10 +135,10 @@ if __name__ == "__main__":
     # train_list_random, test_list_random, val_list_random = random_sort_high_vis_list()
     is_body_not_face = True  # 是否生成全身图像数据
     if is_body_not_face:
-        save_txt_path = ''
+        save_txt_path = 'D:/CodeResp/ImageClassify/dataset/body/'
         img_save_path = 'train/halpe26_data/body_img/'
     else:
-        save_txt_path = ''
+        save_txt_path = 'D:/CodeResp/ImageClassify/dataset/face/'
         img_save_path = 'train/halpe26_data/face_img/'
     train_txt_file = open(save_txt_path + 'train.txt', 'w')  # 以写方式打开文件
     test_txt_file = open(save_txt_path + 'test.txt', 'w')
