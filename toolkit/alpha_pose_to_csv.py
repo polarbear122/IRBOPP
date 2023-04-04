@@ -44,6 +44,19 @@ def box_iou(box1, box2):
     return iou
 
 
+def gen_result_label(each_pedestrian_anno, uuid, i):
+    need_attribute = ['age', 'gender', 'motion_direction', 'crossing']
+    attributes_label = get_anno_by_list(each_pedestrian_anno['attributes'], need_attribute)
+    if attributes_label[-1] == -1:
+        attributes_label[-1] = 0
+    need_behavior = ['look', 'cross', 'reaction', 'hand_gesture', 'action']
+    behavior_label = get_anno_by_frame_id(each_pedestrian_anno['behavior'], need_behavior, i)
+    need_appearance = ['pose_front', 'pose_back', 'pose_left', 'pose_right']
+    appearance_label = get_anno_by_frame_id(each_pedestrian_anno['appearance'], need_appearance, i)
+    result_l = [uuid] + attributes_label + behavior_label + appearance_label
+    return result_l
+
+
 def get_train_data(alpha_pose_path, video_id_name, int_video_id, uuid):
     x = []
     alpha_pose = read_json(alpha_pose_path)
@@ -56,24 +69,17 @@ def get_train_data(alpha_pose_path, video_id_name, int_video_id, uuid):
         if not each_pedestrian_anno['appearance'] or not each_pedestrian_anno['attributes']:
             continue
         for i in range(len(each_pedestrian_anno['frames'])):
-            # frame_id:此行人出现在第几帧中，与idx不同。idx是指在这个行人的列表中，该帧是第几个
+            # frame_id:此行人出现在第几帧中，与i不同。i是指在这个行人的列表中，该帧是第几个
             frame_id = each_pedestrian_anno['frames'][i]
             # print(i, each_pedestrian_id, frame_id)
             true_box = each_pedestrian_anno['bbox'][i]
             # jaad 注释文件,左上角，右下角 (top-left,bottom-right), ytl>xtl, ybr>xbr
-            need_attribute = ['age', 'gender', 'motion_direction', 'crossing']
-            attributes_label = get_anno_by_list(each_pedestrian_anno['attributes'], need_attribute)
-            if attributes_label[-1] == -1:
-                attributes_label[-1] = 0
-            need_behavior = ['look', 'cross', 'reaction', 'hand_gesture', 'action']
-            behavior_label = get_anno_by_frame_id(each_pedestrian_anno['behavior'], need_behavior, i)
-            need_appearance = ['pose_front', 'pose_back', 'pose_left', 'pose_right']
-            appearance_label = get_anno_by_frame_id(each_pedestrian_anno['appearance'], need_appearance, i)
-            result_l = [uuid] + attributes_label + behavior_label + appearance_label
+            result_l = gen_result_label(each_pedestrian_anno, uuid, i)
+
             max_iou = max_iou_threshold = 0.6
+            pose_feature_idx = 0
             # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
-            plot_max_box = []
             for j in range(len(alpha_pose)):
                 pose = alpha_pose[j]
                 if pose['score'] < 1:
@@ -86,14 +92,14 @@ def get_train_data(alpha_pose_path, video_id_name, int_video_id, uuid):
                     if iou_val > max_iou:
                         x_keypoints_proposal = get_key_points(pose['keypoints'])
                         max_pose_box = tl_width_height_box
-                        plot_max_box = pose_box
                         max_iou = iou_val
+                        pose_feature_idx = j
                 elif pose['image_id'] == str(frame_id + 1) + '.jpg':
                     break
             pose_in_img = max_pose_box and 0 < max_pose_box[0] < 1920 and 0 < max_pose_box[1] < 1080 and 0 < \
                           max_pose_box[2] < 1920 and 0 < max_pose_box[3] < 1080
             if x_keypoints_proposal and max_iou > max_iou_threshold and pose_in_img:
-                x.append([uuid] + [int_video_id] + [frame_id] + [ped_id] + x_keypoints_proposal + max_pose_box)
+                x.append([uuid, int_video_id, frame_id, pose_feature_idx, ped_id] + x_keypoints_proposal + max_pose_box)
                 id_uuid_list.append(result_l)
                 uuid += 1
     print(video_id_name, 'shape:', np.mat(x).shape)
@@ -119,15 +125,16 @@ def get_init_data():
             continue
         x, id_uuid_list = get_train_data(alpha_pose_path, video_id_name, i, uuid)
         id_uuid_list_all.append(id_uuid_list)
-        print('all_result.shape', all_result.shape[0], all_result.shape[1])
+
         if x.shape[1] > 1:
             uuid += x.shape[0]
             if all_result is None:
                 all_result = x
             else:
-                np.concatenate((all_result, x), axis=0)
-    # np.savetxt('save_data/new_result.csv', all_result, delimiter=',', fmt='%.3e')
-    with open('文件名.csv', 'w', encoding='utf-8', newline='') as f:
+                all_result = np.concatenate((all_result, x), axis=0)
+        print('all_result.shape', all_result.shape[0], all_result.shape[1])
+    np.savetxt('save_data/new_pose.csv', all_result, delimiter=',', fmt='%.3e')
+    with open('save_data/new_label.csv', 'w', encoding='utf-8', newline='') as f:
         csv_writer = csv.writer(f)
         for i in range(len(id_uuid_list_all)):
             for j in range(len(id_uuid_list_all[i])):

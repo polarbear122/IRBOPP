@@ -92,6 +92,6 @@ def generate_img_patch_init(all_pose):
 
 
 if __name__ == "__main__":
-    all_pose = pd.read_csv('D:/CodeResp/ImageClassify/dataset/look_pose.csv',
+    all_pose = pd.read_csv('../save_data/new_pose.csv',
                            header=None, sep=',', encoding='utf-8').values
     generate_img_patch_init(all_pose)
