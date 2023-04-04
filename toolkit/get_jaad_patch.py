@@ -70,7 +70,7 @@ def get_box_from_keypoints(pose, is_body):
 # 整个的人体图像patch,未经过resize，保留原始大小
 def generate_img_patch_init(all_pose):
     jaad_total_img = '/home/um202170407/zhouyf/CodeResp/JAAD/images/'
-    image_path = jaad_total_img + "video_"
+    image_path = jaad_total_img + 'video_'
     process_raw_img = 0
     for i in range(len(all_pose)):
         pose = all_pose[i]
@@ -81,19 +81,19 @@ def generate_img_patch_init(all_pose):
             print(uuid, need_continue)
         need_gen_img = True
         if need_gen_img:
-            img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id).zfill(5) + ".jpg"
+            img_file_path = image_path + str(v_id).zfill(4) + '/' + str(img_id).zfill(5) + '.png'
             if i == 0 or v_id != int(all_pose[i - 1][1]) or img_id != int(all_pose[i - 1][3]):
                 process_raw_img = Image.open(img_file_path)
             box = (xtl, ytl, xbr, ybr)
             img_patch = process_raw_img.crop(box)
-            img_patch.save('train/halpe26_data/body_img/' + str(uuid) + ".bmp")
+            img_patch.save('train/halpe26_data/body_img/' + str(uuid) + '.bmp')
             face_box = (xtl_f, ytl_f, xbr_f, ybr_f)
             print(box, face_box)
             face_img_patch = process_raw_img.crop(face_box)
-            face_img_patch.save('train/halpe26_data/face_img/' + str(uuid) + ".bmp")
+            face_img_patch.save('train/halpe26_data/face_img/' + str(uuid) + '.bmp')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     all_pose = pd.read_csv('../save_data/new_pose.csv',
                            header=None, sep=',', encoding='utf-8').values
     generate_img_patch_init(all_pose)
