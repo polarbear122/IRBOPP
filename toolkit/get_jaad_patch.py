@@ -74,7 +74,7 @@ def generate_img_patch_init(all_pose):
     process_raw_img = 0
     for i in range(len(all_pose)):
         pose = all_pose[i]
-        uuid, v_id, idx, img_id, label = int(pose[0]), int(pose[1]), int(pose[2]), int(pose[3]), int(pose[86])
+        uuid, v_id, idx, img_id, label = int(pose[0]), int(pose[1]), int(pose[3]), int(pose[2]), int(pose[86])
         xtl, ytl, xbr, ybr, need_continue = get_box_from_keypoints(pose[4:86], True)
         xtl_f, ytl_f, xbr_f, ybr_f, need_continue_f = get_box_from_keypoints(pose[4:86], False)
         if need_continue:
