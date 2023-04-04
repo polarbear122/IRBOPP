@@ -4,10 +4,10 @@
 import pandas as pd
 from PIL import Image
 
+# 将中心点(middle_x, middle_y)，宽高(box_width, box_height)格式转左上右下点格式
 from config import jaad_total_img
 
 
-# 将中心点(middle_x, middle_y)，宽高(box_width, box_height)格式转左上右下点格式
 def mid_width_to_tl_br(middle_x, middle_y, box_width, box_height):
     top_left_x, top_left_y = middle_x - box_width / 2, middle_y - box_height / 2
     bottom_right_x, bottom_right_y = middle_x + box_width / 2, middle_y + box_height / 2
@@ -68,6 +68,7 @@ def get_box_from_keypoints(pose, is_body):
 
 # 整个的人体图像patch,未经过resize，保留原始大小
 def generate_img_patch_init(all_pose):
+    # jaad_total_img = '/home/um202170407/zhouyf/CodeResp/JAAD/images/'
     image_path = jaad_total_img + "video_"
     process_raw_img = 0
     for i in range(len(all_pose)):

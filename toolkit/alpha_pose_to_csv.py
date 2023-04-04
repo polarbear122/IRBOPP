@@ -99,7 +99,8 @@ def get_train_data(alpha_pose_path, video_id_name, int_video_id, uuid):
             pose_in_img = max_pose_box and 0 < max_pose_box[0] < 1920 and 0 < max_pose_box[1] < 1080 and 0 < \
                           max_pose_box[2] < 1920 and 0 < max_pose_box[3] < 1080
             if x_keypoints_proposal and max_iou > max_iou_threshold and pose_in_img:
-                x.append([uuid, int_video_id, frame_id, pose_feature_idx, ped_id] + x_keypoints_proposal + max_pose_box)
+                x.append([uuid, int_video_id, frame_id, ped_id] + x_keypoints_proposal + max_pose_box + [
+                    pose_feature_idx])
                 id_uuid_list.append(result_l)
                 uuid += 1
     print(video_id_name, 'shape:', np.mat(x).shape)
