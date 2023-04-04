@@ -1,3 +1,4 @@
+import os
 import random
 import time
 
@@ -5,15 +6,14 @@ import cv2
 import numpy as np
 import pandas as pd
 import torch
-import os
-
 from PIL import Image
 
 import config
 import train.test_joint_image_video as jo
+from JAAD_2.jaad_data import JAAD
 
 
-def test_cuda():
+def print_cuda():
     print("torch version:", torch.__version__)
     print(torch.cuda.is_available())  # cuda是否可用
     print("number of gpu:", torch.cuda.device_count())  # 返回GPU的数量
@@ -22,7 +22,7 @@ def test_cuda():
     print(torch.backends.cudnn.version())
 
 
-def test_numpy():
+def print_numpy():
     print(np.amax([0, 0, 0, 0, 0], axis=0))
     pose_array = np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]])
     labels = np.array([[0], [1], [2]])
@@ -211,30 +211,27 @@ def test_pil_read_img():
         # crop = raw_img[100:350, 100:550, :]
         # cv2.imwrite('D:/CodeResp/pie_data/patch_img/testpil/' + str(i) + '.jpg', crop)
     end = time.time()
-    print('end-st %f s' % ((end - st)/200))
+    print('end-st %f s' % ((end - st) / 200))
 
 
-# train len 188
-train_list = [1, 3, 4, 7, 8, 9, 10, 11, 12, 13, 14, 18, 19, 20, 24, 25, 26, 27, 30, 31, 33, 34, 35, 37, 38, 39, 47, 49,
-              50, 51, 52, 54, 56, 57, 60, 61, 62, 64, 66, 69, 74, 77, 78, 79, 80, 81, 83, 85, 86, 88, 91, 94, 95, 98,
-              108, 109, 111, 112, 114, 119, 120, 121, 122, 126, 129, 130, 131, 132, 133, 134, 136, 137, 138, 139, 140,
-              142, 143, 145, 146, 147, 149, 154, 157, 158, 159, 161, 166, 167, 168, 169, 171, 174, 175, 176, 180, 182,
-              184, 185, 186, 188, 189, 190, 191, 192, 194, 195, 196, 198, 200, 202, 204, 205, 207, 208, 209, 210, 214,
-              215, 218, 219, 220, 225, 227, 228, 229, 231, 232, 233, 235, 236, 237, 240, 241, 242, 246, 247, 248, 249,
-              250, 254, 255, 256, 257, 258, 259, 260, 261, 262, 264, 266, 268, 269, 272, 275, 276, 281, 282, 283, 284,
-              286, 289, 290, 293, 296, 297, 298, 301, 302, 310, 311, 312, 315, 317, 318, 319, 320, 321, 323, 324, 325,
-              326, 328, 331, 335, 341, 342, 345, 346]
-# test len 126
-test_list = [5, 15, 16, 17, 22, 23, 28, 29, 32, 36, 42, 43, 45, 46, 48, 53, 55, 58, 59, 63, 67, 68, 70, 71, 75, 76, 84,
-             87, 90, 92, 93, 96, 97, 100, 101, 103, 104, 105, 106, 107, 110, 113, 115, 116, 117, 118, 124, 125, 127,
-             128, 135, 141, 144, 148, 150, 151, 152, 153, 155, 162, 163, 164, 165, 173, 177, 178, 179, 183, 187, 197,
-             201, 203, 206, 211, 212, 213, 216, 221, 222, 223, 224, 230, 234, 238, 239, 243, 244, 245, 251, 253, 265,
-             267, 270, 271, 277, 278, 279, 280, 285, 287, 288, 292, 294, 295, 299, 300, 304, 305, 307, 308, 309, 313,
-             314, 316, 322, 327, 329, 330, 332, 333, 334, 336, 337, 338, 339, 344]
+# 生成行人的唯一id，由原来的str转换为int
+# 由于发现jaad提供了唯一id，所以不再自己生成
+def gen_id():
+    x = JAAD(data_path='JAAD_2/')
+    jaad_data = x.generate_database()
+    ped_id = 0
+    ped_id_dict = {}
+    for video_name in jaad_data:
+        anno_dict = jaad_data[video_name]
+        ped_name_dict = anno_dict['ped_annotations']
+        for ped_name in ped_name_dict:
+            if ped_name in ped_id_dict:
+                continue
+            else:
+                ped_id_dict[ped_name] = ped_id
+                ped_id += 1
+    print(ped_id_dict)
 
-# val len 32
-val_list = [2, 6, 21, 40, 41, 44, 65, 72, 73, 82, 89, 99, 102, 123, 156, 160, 170, 172, 181, 193, 199, 217, 226, 252,
-            263, 273, 274, 291, 303, 306, 340, 343]
 
 if __name__ == "__main__":
-    test_pil_read_img()
+    gen_id()

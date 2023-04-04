@@ -56,11 +56,12 @@ def get_box_from_keypoints(pose, is_body):
     y_mid, y_sub = (ytl + ybr) / 2, ybr - ytl
     ytl = y_mid - y_sub * ytl_factor
     ybr = y_mid + y_sub * ybr_factor
-    xtl, ytl, xbr, ybr = limit_axis(
-        xbr, 0, 1920), limit_axis(xtl, 0, 1920), limit_axis(ytl, 0, 1080), limit_axis(ybr, 0, 1080)
+    xtl, xbr, ytl, ybr = limit_axis(
+        xtl, 0, 1920), limit_axis(xbr, 0, 1920), limit_axis(ytl, 0, 1080), limit_axis(ybr, 0, 1080)
     need_continue = False
     xtl, ytl, xbr, ybr = round(xtl), round(ytl), round(xbr), round(ybr)
     if ybr <= ytl or xbr <= xtl:
+        need_continue = True
         xtl, ytl, xbr, ybr = xtl - 10, ytl - 10, xbr + 10, ybr + 10
     return xtl, ytl, xbr, ybr, need_continue
 
@@ -74,6 +75,8 @@ def generate_img_patch_init(all_pose):
         uuid, v_id, idx, img_id, label = int(pose[0]), int(pose[1]), int(pose[2]), int(pose[3]), int(pose[86])
         xtl, ytl, xbr, ybr, need_continue = get_box_from_keypoints(pose[4:86], True)
         xtl_f, ytl_f, xbr_f, ybr_f, need_continue_f = get_box_from_keypoints(pose[4:86], False)
+        if need_continue:
+            print(uuid, need_continue)
         need_gen_img = False
         if need_gen_img:
             img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"

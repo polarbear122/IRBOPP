@@ -4,23 +4,22 @@
 """
 
 import csv
+import os.path
 
 import numpy as np
 # 提供读取数据的方法
 # 从alpha pose的检测结果和jaad的注释文件中读取keypoints和对应img id，保存结果为csv文件
 import pandas as pd
 
-import config
-from toolkit.plot_data import plot_pose_box_look
-from toolkit.read_data import simple_normalize_read
+from JAAD_2.jaad_data import JAAD
 from toolkit.read_pose_data import read_json
-from toolkit.tool import xml_read, str_to_int
+from toolkit.tool import get_anno_by_frame_id, get_anno_by_list, change_str_id_to_int
 
 
 def get_key_points(keypoints: list):
     # key points [0, 1, 2, 3, 4, 17, 18]
     if len(keypoints) != 26 * 3 and len(keypoints) != 17 * 3:
-        print("the len of keypoints is not 26*3 or 17*3")
+        print('the len of keypoints is not 26*3 or 17*3')
         return []
     key_points = []
     # for i in [0, 1, 2, 3, 4, 17, 18]:
@@ -45,79 +44,59 @@ def box_iou(box1, box2):
     return iou
 
 
-def get_train_data(jaad_anno_path, alpha_pose_path, video_id, int_video_id, uuid):
+def get_train_data(alpha_pose_path, video_id_name, int_video_id, uuid):
     x = []
     alpha_pose = read_json(alpha_pose_path)
-    jaad_anno = xml_read(jaad_anno_path)
-    annotations = jaad_anno["annotations"]
-    if "track" not in annotations:
-        return np.mat(x), []
-    if "box" in annotations["track"]:
-        track_box = [annotations["track"]]
-    else:
-        track_box = annotations["track"]
-    is_repeat = 0
-    # fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')  # 设置输出视频为mp4格式 cap_fps, size = 30, (1920,1080)
-    # size（width，height）
-    # video_pose_box = cv2.VideoWriter("train_data/iou/data_by_video-pose-box" + str(
-    # video_id) + ".mp4", fourcc, cap_fps, size)
     id_uuid_list = []
-
-    for i in track_box:
-        if i["@label"] != "pedestrian":
+    this_video_anno = jaad_data[video_id_name]
+    ped_anno = this_video_anno['ped_annotations']
+    for each_pedestrian_id in ped_anno:
+        ped_id = change_str_id_to_int(each_pedestrian_id)
+        each_pedestrian_anno = ped_anno[each_pedestrian_id]
+        if not each_pedestrian_anno['appearance'] or not each_pedestrian_anno['attributes']:
             continue
-        is_repeat += 1
-        for annotation in i["box"]:
-            # jaad 注释文件，左上角，右下角 (top-left, bottom-right), ybr>xbr,ytl>xtl
-            xtl, ytl = str_to_int(annotation["@xtl"]), str_to_int(annotation["@ytl"])
-            xbr, ybr = str_to_int(annotation["@xbr"]), str_to_int(annotation["@ybr"])
-            # x_mid, y_mid = (xtl + xbr) // 2, (ytl + ybr) // 2
-            if xtl <= 0 or ytl <= 0 or (xbr - xtl) <= 0 or (ybr - ytl) <= 0:
-                # print(annotation)
-                continue
+        for i in range(len(each_pedestrian_anno['frames'])):
+            # frame_id:此行人出现在第几帧中，与idx不同。idx是指在这个行人的列表中，该帧是第几个
+            frame_id = each_pedestrian_anno['frames'][i]
+            # print(i, each_pedestrian_id, frame_id)
+            true_box = each_pedestrian_anno['bbox'][i]
+            # jaad 注释文件,左上角，右下角 (top-left,bottom-right), ytl>xtl, ybr>xbr
+            need_attribute = ['age', 'gender', 'motion_direction', 'crossing']
+            attributes_label = get_anno_by_list(each_pedestrian_anno['attributes'], need_attribute)
+            if attributes_label[-1] == -1:
+                attributes_label[-1] = 0
+            need_behavior = ['look', 'cross', 'reaction', 'hand_gesture', 'action']
+            behavior_label = get_anno_by_frame_id(each_pedestrian_anno['behavior'], need_behavior, i)
+            need_appearance = ['pose_front', 'pose_back', 'pose_left', 'pose_right']
+            appearance_label = get_anno_by_frame_id(each_pedestrian_anno['appearance'], need_appearance, i)
+            result_l = [uuid] + attributes_label + behavior_label + appearance_label
             max_iou = max_iou_threshold = 0.6
-            pose_box = []  # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
+            # alpha pose的box位置,格式为([0],[1])左上角,([2],[3])宽和高,修改成(左上角,右下角)格式
             x_keypoints_proposal, max_pose_box = [], []  # 存储key points,max_pose_box为iou最大时的box（左上角，宽高）格式
-            img_frame_id, idx = 0, 0
             plot_max_box = []
-            for pose in alpha_pose:
-                if pose["score"] < 1:
+            for j in range(len(alpha_pose)):
+                pose = alpha_pose[j]
+                if pose['score'] < 1:
                     continue
-                if pose["image_id"] == annotation["@frame"] + ".jpg":
-                    idx = pose["idx"]
-                    pose_box = [pose["box"][0], pose["box"][1], pose["box"][0] + pose["box"][2],
-                                pose["box"][1] + pose["box"][3]]
-                    tl_width_height_box = pose["box"]  # 获取alpha pose中的box，(左上角点，宽高)格式
-                    true_box = [xtl, ytl, xbr, ybr]
+                if pose['image_id'] == str(frame_id) + '.jpg':
+                    pose_box = [pose['box'][0], pose['box'][1], pose['box'][0] + pose['box'][2],
+                                pose['box'][1] + pose['box'][3]]
+                    tl_width_height_box = pose['box']  # 获取alpha pose中的box，(左上角点，宽高)格式
                     iou_val = box_iou(pose_box, true_box)
                     if iou_val > max_iou:
-                        x_keypoints_proposal = get_key_points(pose["keypoints"])
+                        x_keypoints_proposal = get_key_points(pose['keypoints'])
                         max_pose_box = tl_width_height_box
                         plot_max_box = pose_box
-                        img_frame_id = int(annotation["@frame"])
                         max_iou = iou_val
-                elif pose["image_id"] == str(int(annotation["@frame"]) + 1) + ".jpg":
+                elif pose['image_id'] == str(frame_id + 1) + '.jpg':
                     break
-            frame_id = annotation['@frame']
-            human_id = annotation["attribute"][0]['#text']
-            is_look = annotation["attribute"][2]["#text"]
             pose_in_img = max_pose_box and 0 < max_pose_box[0] < 1920 and 0 < max_pose_box[1] < 1080 and 0 < \
                           max_pose_box[2] < 1920 and 0 < max_pose_box[3] < 1080
             if x_keypoints_proposal and max_iou > max_iou_threshold and pose_in_img:
-                label = 0
-                if is_look == "looking":
-                    label = 1
-                x.append(
-                    [uuid] + [int_video_id] + [idx] + [img_frame_id] + x_keypoints_proposal + max_pose_box + [label])
-                id_uuid_list.append([uuid, int_video_id, human_id, frame_id])
+                x.append([uuid] + [int_video_id] + [frame_id] + [ped_id] + x_keypoints_proposal + max_pose_box)
+                id_uuid_list.append(result_l)
                 uuid += 1
-                need_plot = False
-                if need_plot and pose_box and max_iou > max_iou_threshold:
-                    plot_img = plot_pose_box_look(plot_max_box, annotation, is_look, video_id, x_keypoints_proposal)
-                    # video_pose_box.write(plot_img)
-
-    # video_pose_box.release()
-    print(video_id, "shape:", np.mat(x).shape)
+    print(video_id_name, 'shape:', np.mat(x).shape)
     return np.mat(x), id_uuid_list
 
 
@@ -129,40 +108,31 @@ def np_sort(n_arr: np.array):
 
 
 def get_init_data():
-    video_count = 0  # 计算有多少个视频是有效的
-    xml_anno = config.jaad_anno
-    alpha_pose = config.alpha_pose
+    alpha_pose = 'res/'
     uuid = 0
     id_uuid_list_all = []
+    all_result = None
     for i in range(1, 347):
-        video_id_name = "video_" + str(i).zfill(4)
-        xml_anno_path = xml_anno + video_id_name + ".xml"
-        alpha_pose_path = alpha_pose + video_id_name + "/alphapose-results.json"
-        x, id_uuid_list = get_train_data(xml_anno_path, alpha_pose_path, video_id_name, i, uuid)
+        video_id_name = 'video_' + str(i).zfill(4)
+        alpha_pose_path = alpha_pose + video_id_name + '/alphapose-results.json'
+        if not os.path.exists(alpha_pose_path):
+            continue
+        x, id_uuid_list = get_train_data(alpha_pose_path, video_id_name, i, uuid)
         id_uuid_list_all.append(id_uuid_list)
-        print("x.shape", x.shape[0], x.shape[1])
+        print('all_result.shape', all_result.shape[0], all_result.shape[1])
         if x.shape[1] > 1:
             uuid += x.shape[0]
-            video_count += 1
-            x_array = np_sort(np.asarray(x))
-
-            y_array = x_array[:, -1]
-            # np.savetxt("../cross/data/data" + str(i) + ".csv", x_array, delimiter=',')
-            # np.savetxt("../cross/data/label" + str(i) + ".csv", y_array, delimiter=',')
+            if all_result is None:
+                all_result = x
+            else:
+                np.concatenate((all_result, x), axis=0)
+    # np.savetxt('save_data/new_result.csv', all_result, delimiter=',', fmt='%.3e')
     with open('文件名.csv', 'w', encoding='utf-8', newline='') as f:
         csv_writer = csv.writer(f)
         for i in range(len(id_uuid_list_all)):
             for j in range(len(id_uuid_list_all[i])):
                 row = id_uuid_list_all[i][j]
                 csv_writer.writerow(row)
-    return video_count
-
-
-def read_all_to_one():
-    all_pose = simple_normalize_read('train/halpe26_reid/', range(1, 347))
-    sort_pose = np_sort(all_pose)
-    np.savetxt('train/pose_all.csv', sort_pose, delimiter=',')
-    pass
 
 
 def rename_uuid():
@@ -172,5 +142,7 @@ def rename_uuid():
     np.savetxt('train/pose_all_re.csv', pose_arr, delimiter=',')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
+    x = JAAD(data_path='JAAD_2/')
+    jaad_data = x.generate_database()
     get_init_data()

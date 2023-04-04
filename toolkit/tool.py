@@ -1,7 +1,6 @@
 # 读取xml文件
-import logging
 import pickle
-import cv2
+
 import xmltodict
 
 
@@ -32,8 +31,26 @@ def load_model(file_path):
     return model
 
 
-if __name__ == "__main__":
-    for i in range(1, 300):
-        video_id = "video_" + str(i).zfill(4)
-        xml_path = "E:/CodeResp/pycode/DataSet/JAAD-JAAD_2.0/annotations/" + video_id + ".xml"
-        output_data_path = "E:/CodeResp/pycode/DataSet/JAAD_image/" + video_id + "/"
+def get_anno_by_frame_id(anno_dict, name_list, frame_id):
+    anno_list = []
+    for i in name_list:
+        anno_list.append(int(anno_dict[i][frame_id]))
+    return anno_list
+
+
+def get_anno_by_list(anno_dict, name_list):
+    anno_list = []
+    for i in name_list:
+        anno_list.append(anno_dict[i])
+    return anno_list
+
+
+# 将原有jaad的str id转换为int id
+def change_str_id_to_int(str_id):
+    s = str_id.split('_')[-1]
+    ped_id = ''.join(filter(str.isdigit, s))
+    return int(ped_id)
+
+
+if __name__ == '__main__':
+    print(change_str_id_to_int('0_2_674'))

@@ -4,7 +4,6 @@ import numpy as np
 
 import calculate.calculate as cal
 import toolkit.read_data as read_data
-from log_config import log
 from toolkit.tool import load_model
 
 
@@ -64,16 +63,16 @@ def calculate_joint_img_delay(__y_pred_joint: np.array, __test_label: list):
 
 if __name__ == "__main__":
     start_at = time.time()
-    log.logger.info("联合测试开始-------------------------------------------")
+    print("联合测试开始-------------------------------------------")
     train_norm_pose, train_label, train_video_length_list, test_norm_pose, test_label, test_video_length_list \
         = read_data.read_data_no_track()
     get_data_at = time.time()
-    log.logger.info("测试联合分类器, 测试data大小(%d,%d),%d" %
-                    (test_norm_pose.shape[0], test_norm_pose.shape[1], test_label.shape[0]))
+    print("测试联合分类器, 测试data大小(%d,%d),%d" %
+          (test_norm_pose.shape[0], test_norm_pose.shape[1], test_label.shape[0]))
     # 修改原始数据格式，图像级别检测的数据不需要改变，视频级别数据需要修改
     forest_model = load_model("../train/trained_model/Forest_image.model")
     sgd_model = load_model("../train/trained_model/SGD_image_ml.model")
-    log.logger.info("video len list : %s" % len(test_video_length_list))
+    print("video len list : %s" % len(test_video_length_list))
 
     y_forest_pred = forest_model.predict(test_norm_pose)
     for i in range(len(y_forest_pred)):
@@ -109,4 +108,4 @@ if __name__ == "__main__":
     end_at = time.time()
     total_con, read_con, train_con = end_at - start_at, get_data_at - start_at, end_at - get_data_at
     # print('{0} {1} {0}'.format('hello', 'world'))  # 打乱顺序
-    log.logger.info("%s:总运行时间%f秒,数据读取时间%f秒,测试时间%f秒" % ("联合训练", total_con, read_con, train_con))
+    print("%s:总运行时间%f秒,数据读取时间%f秒,测试时间%f秒" % ("联合训练", total_con, read_con, train_con))

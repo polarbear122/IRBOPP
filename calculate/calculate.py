@@ -1,8 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score, roc_curve, auc
-import matplotlib.pyplot as plt
-from log_config.log import logger
 
 
 # 真实正值（TP）-表示该类为“真值”的次数，您的模型也表示它为“真值”。
@@ -147,7 +146,7 @@ def calculate_all(y_true, y_predict):
     calculate_name = [calculate_TP, calculate_TN, calculate_FP, calculate_FN,
                       calculate_precision, calculate_recall, calculate_F1, roc_auc, brier_score, calculate_accuracy]
     for name in calculate_name:
-        logger.info("数值:%f, 指标:%s" % (name(y_true, y_predict), name.__name__))
+        print("数值:%f, 指标:%s" % (name(y_true, y_predict), name.__name__))
 
 
 if __name__ == "__main__":
