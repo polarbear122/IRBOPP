@@ -86,11 +86,11 @@ def generate_img_patch_init(all_pose):
                 process_raw_img = Image.open(img_file_path)
             box = (xtl, ytl, xbr, ybr)
             img_patch = process_raw_img.crop(box)
-            img_patch.save('train/halpe26_data/body_img/' + str(uuid) + '.bmp')
+            img_patch.save('../train/patch_img/body_img/' + str(uuid) + '.bmp')
             face_box = (xtl_f, ytl_f, xbr_f, ybr_f)
             print(box, face_box)
             face_img_patch = process_raw_img.crop(face_box)
-            face_img_patch.save('train/halpe26_data/face_img/' + str(uuid) + '.bmp')
+            face_img_patch.save('../train/patch_img/face_img/' + str(uuid) + '.bmp')
 
 
 if __name__ == '__main__':
