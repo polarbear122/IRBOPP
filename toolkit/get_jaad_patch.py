@@ -81,7 +81,7 @@ def generate_img_patch_init(all_pose):
             print(uuid, need_continue)
         need_gen_img = True
         if need_gen_img:
-            img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id) + ".jpg"
+            img_file_path = image_path + str(v_id).zfill(4) + "/" + str(img_id).zfill(5) + ".jpg"
             if i == 0 or v_id != int(all_pose[i - 1][1]) or img_id != int(all_pose[i - 1][3]):
                 process_raw_img = Image.open(img_file_path)
             box = (xtl, ytl, xbr, ybr)
