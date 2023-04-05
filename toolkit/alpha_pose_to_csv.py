@@ -134,7 +134,7 @@ def get_init_data():
             else:
                 all_result = np.concatenate((all_result, x), axis=0)
         print('all_result.shape', all_result.shape[0], all_result.shape[1])
-    np.savetxt('save_data/new_pose.csv', all_result, delimiter=',', fmt='%.3e')
+    np.savetxt('save_data/new_pose.csv', all_result, delimiter=',', fmt='%.3f')
     with open('save_data/new_label.csv', 'w', encoding='utf-8', newline='') as f:
         csv_writer = csv.writer(f)
         for i in range(len(id_uuid_list_all)):
@@ -147,7 +147,7 @@ def rename_uuid():
     pose_arr = pd.read_csv('train/pose_all.csv', header=None, sep=',', encoding='utf-8').values
     for i in range(len(pose_arr)):
         pose_arr[i, 0] = i
-    np.savetxt('train/pose_all_re.csv', pose_arr, delimiter=',')
+    np.savetxt('train/pose_all_re.csv', pose_arr, delimiter=',', fmt='%.3e')
 
 
 if __name__ == '__main__':

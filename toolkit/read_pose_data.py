@@ -1,6 +1,7 @@
 # 读取alpha pose的检测结果 json
 
 import json
+import os.path
 import random
 
 import matplotlib.image as mpimg
@@ -164,5 +165,22 @@ def main():
     # write_pose_cross_data(j, bbox_path, image_path, output_data_path, 'cross', True)
 
 
+def compare_json():
+    x = read_json('C:/Users/60260/Desktop/1.json')
+    y = read_json('C:/Users/60260/Desktop/2.json')
+    print(len(x), len(y))
+    pass
+
+
+def compare_json_len():
+    for i in range(347):
+        alpha_pose_path = 'res/video_' + str(i).zfill(4) + '/alphapose-results.json'
+        if not os.path.exists(alpha_pose_path):
+            print(alpha_pose_path)
+            continue
+        alpha_pose = read_json(alpha_pose_path)
+        print(i, len(alpha_pose))
+
+
 if __name__ == "__main__":
-    main()
+    compare_json_len()

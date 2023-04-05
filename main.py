@@ -235,3 +235,4 @@ def gen_id():
 
 if __name__ == "__main__":
     gen_id()
+    'idea.max.vcs.loaded.size.kb'
